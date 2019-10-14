@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<project name="superscalar-processor" basedir="." default="all">
+
+  <property name="src.dir" value="src"/>
+  <property name="build.dir" value="build"/>
+
+  <target name="clean" description="Clean output directories">
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="build" description="Compile source tree java files">
+    <mkdir dir="${build.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false"/>
+  </target>
+
+  <target name="build-jar" depends="build" description="Compiles a JAR from built class files">
+   <jar destfile="${ant.project.name}.jar" basedir="${build.dir}">
+    <manifest>
+      <attribute name="Main-Class" value="core.Main"/>
+    </manifest>
+   </jar>
+  </target>
+
+  <target name="run" depends="build-jar">
+    <java jar="${ant.project.name}.jar" fork="true"/>
+  </target>
+
+  <target name="all" depends="clean,run"/>
+
+</project>
