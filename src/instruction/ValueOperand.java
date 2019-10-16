@@ -6,4 +6,9 @@ public class ValueOperand extends Operand {
     super(value);
   }
 
+  @Override
+  public String toString() {
+    return Integer.toString(value);
+  }
+
 }

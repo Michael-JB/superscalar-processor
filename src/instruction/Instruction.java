@@ -11,6 +11,11 @@ public abstract class Instruction {
   public Instruction(Opcode opcode, Operand... operands) {
     this.opcode = opcode;
     this.operands = operands;
+
+    if (operands.length != opcode.getOperandCount()) {
+      throw new IllegalArgumentException(
+        "Invalid operand count. " + operands.length + " provided, " + opcode.getOperandCount() + " required.");
+    }
   }
 
   public Opcode getOpcode() {

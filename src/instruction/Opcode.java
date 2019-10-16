@@ -2,13 +2,20 @@ package instruction;
 
 public enum Opcode {
 
+  /* Arithmetic */
   ADD(3),
   SUB(3),
   ADDI(3),
   SUBI(3),
   MUL(3),
   DIV(3),
-  CMP(3);
+  CMP(3),
+
+  /* Memory */
+  MOVE(2),
+
+  /* ... */
+  ;
 
   private final String instructionPrefix;
   private final int operandCount;
