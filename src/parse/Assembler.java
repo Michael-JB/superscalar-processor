@@ -11,11 +11,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import instruction.AddImmediateInstruction;
 import instruction.AddInstruction;
+import instruction.DivideInstruction;
 import instruction.Instruction;
+import instruction.LoadImmediateInstruction;
+import instruction.LoadInstruction;
 import instruction.MoveInstruction;
+import instruction.MultiplyInstruction;
 import instruction.Opcode;
 import instruction.RegisterOperand;
+import instruction.SubtractImmediateInstruction;
+import instruction.SubtractInstruction;
 import instruction.ValueOperand;
 
 public class Assembler {
@@ -97,7 +104,62 @@ public class Assembler {
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
             Optional<RegisterOperand> operand3 = parseRegisterOperand(tokens[3]);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
-              return Optional.of((Instruction) new AddInstruction(operand1.get(), operand2.get(), operand3.get()));
+              return Optional.of(new AddInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "sub":
+          opcode = Opcode.SUB;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<RegisterOperand> operand3 = parseRegisterOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new SubtractInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "addi":
+          opcode = Opcode.ADDI;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new AddImmediateInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "subi":
+          opcode = Opcode.SUBI;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new SubtractImmediateInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "mul":
+          opcode = Opcode.MUL;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<RegisterOperand> operand3 = parseRegisterOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new MultiplyInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "div":
+          opcode = Opcode.DIV;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<RegisterOperand> operand3 = parseRegisterOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new DivideInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
           }
           break;
@@ -107,7 +169,28 @@ public class Assembler {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
             Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
             if (operand1.isPresent() && operand2.isPresent()) {
-              return Optional.of((Instruction) new MoveInstruction(operand1.get(), operand2.get()));
+              return Optional.of(new MoveInstruction(operand1.get(), operand2.get()));
+            }
+          }
+          break;
+        case "ld":
+          opcode = Opcode.LD;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new LoadInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "ldi":
+          opcode = Opcode.LDI;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
+            if (operand1.isPresent() && operand2.isPresent()) {
+              return Optional.of(new LoadImmediateInstruction(operand1.get(), operand2.get()));
             }
           }
           break;

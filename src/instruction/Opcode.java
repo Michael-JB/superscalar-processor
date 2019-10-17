@@ -3,18 +3,18 @@ package instruction;
 public enum Opcode {
 
   /* Arithmetic */
-  ADD(3),
-  SUB(3),
-  ADDI(3),
-  SUBI(3),
-  MUL(3),
-  DIV(3),
-  CMP(3),
+  ADD(3),  /* add  r1 r2 r3 = r1 <- r2 + r3 */
+  SUB(3),  /* sub  r1 r2 r3 = r1 <- r2 - r3 */
+  ADDI(3), /* addi r1 r2 v1 = r1 <- r2 + v1 */
+  SUBI(3), /* subi r1 r2 v1 = r1 <- r2 - v1 */
+  MUL(3),  /* mul  r1 r2 r3 = r1 <- r2 * r3 */
+  DIV(3),  /* div  r1 r2 r3 = r1 <- r2 / r3 */
+  CMP(3),  /* cmp  r1 r2 r3 = r1 <- {-1 if r2 < r3, 0 if r2 = r3, 1 if r2 > r3} */
 
   /* Memory */
-  MOVE(2),
-  LD(3),
-  LDI(2),
+  MOVE(2), /* move r1 v1    = r1 <- v1 */
+  LD(3),   /* ld   r1 r2 v1 = r1 <- [r2 + v1] */
+  LDI(2),  /* ldi  r1 v1    = r1 <- [v1] */
 
   /* ... */
   ;
