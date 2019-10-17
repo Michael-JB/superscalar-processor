@@ -13,6 +13,8 @@ public enum Opcode {
 
   /* Memory */
   MOVE(2),
+  LD(3),
+  LDI(2),
 
   /* ... */
   ;
