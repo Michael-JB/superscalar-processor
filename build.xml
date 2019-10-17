@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project name="superscalar-processor" basedir="." default="all">
+<project name="superscalar-processor" basedir="." default="all" xmlns:if="ant:if">
 
   <property name="src.dir" value="src"/>
   <property name="build.dir" value="build"/>
@@ -23,7 +23,9 @@
   </target>
 
   <target name="run" depends="build-jar">
-    <java jar="${ant.project.name}.jar" fork="true"/>
+    <java jar="${ant.project.name}.jar" fork="true">
+      <arg value="${pf}" if:set="pf"/>
+    </java>
   </target>
 
   <target name="all" depends="clean,run"/>
