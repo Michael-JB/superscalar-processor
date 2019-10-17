@@ -16,7 +16,11 @@ This project is written in Java and built using Apache Ant.
   - `$ ant clean` cleans the build directory,
   - `$ ant build` compiles the source tree files,
   - `$ ant build-jar` compiles a JAR from built class files,
-  - `$ ant run` runs the project JAR.
+  - `$ ant run` runs the project JAR, with the option to specify a custom program file: `$ ant run -Dpf=./programs/some_program.asm`.
+- Alternatively, once built, you can interact with the JAR directly:
+  - `$ java -jar superscalar-processor.jar` to run the default program, or
+  - `$ java -jar superscalar-processor.jar ./programs/some_program.asm` to specify a custom program file.
+
 
 ## Built with
 
