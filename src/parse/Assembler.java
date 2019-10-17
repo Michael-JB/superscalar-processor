@@ -1,4 +1,4 @@
-package core;
+package parse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,18 +23,6 @@ public class Assembler {
   private final String charRegexWhitelist = "[^A-Za-z0-9# ]";
   private final String commentPrefix = "#";
 
-  public List<String> getLinesFromFile(String fileName) {
-    Path path = Paths.get(fileName);
-    List<String> lines = new ArrayList<String>();
-    try {
-      lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      System.out.println("Unable to read from file: " + fileName);
-      e.printStackTrace();
-    }
-    return lines;
-  }
-
   public ParsedProgram parseProgramFile(String programFile) {
     List<Optional<Instruction>> instructions = getLinesFromFile(programFile).stream()
       .map(this::sanitiseLine)
@@ -53,12 +41,28 @@ public class Assembler {
     }
   }
 
-  public String sanitiseLine(String line) {
-    String cleanLine = line.replaceAll(charRegexWhitelist, "");
-    if (cleanLine.contains(commentPrefix)) {
-      cleanLine = cleanLine.split(commentPrefix)[0];
+  private List<String> getLinesFromFile(String fileName) {
+    Path path = Paths.get(fileName);
+    List<String> lines = new ArrayList<String>();
+    try {
+      lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      System.out.println("Unable to read from file: " + fileName);
+      e.printStackTrace();
     }
-    return cleanLine.trim();
+    return lines;
+  }
+
+  private String compressConsecutiveWhitespace(String line) {
+    return line.replaceAll(" +", " ").trim();
+  }
+
+  private String sanitiseLine(String line) {
+    String cleanLine = compressConsecutiveWhitespace(line.replaceAll(charRegexWhitelist, ""));
+    if (cleanLine.contains(commentPrefix)) {
+      cleanLine = cleanLine.split(commentPrefix)[0].trim();
+    }
+    return cleanLine;
   }
 
   private Optional<RegisterOperand> parseRegisterOperand(String token) {
@@ -79,7 +83,7 @@ public class Assembler {
     return Integer.parseInt(token.replaceAll("[^0-9]", ""));
   }
 
-  public Optional<Instruction> parseLine(String line) {
+  private Optional<Instruction> parseLine(String line) {
     String[] tokens = line.split(" ");
 
     if (tokens.length > 0) {

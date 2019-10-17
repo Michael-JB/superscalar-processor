@@ -2,6 +2,9 @@ package core;
 
 import java.io.File;
 
+import parse.Assembler;
+import parse.ParsedProgram;
+
 public class Main {
 
   private final static String defaultProgramFileName = "./programs/add.asm";
@@ -22,7 +25,6 @@ public class Main {
     }
 
     Assembler assembler = new Assembler();
-
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
 
     if (!parsedProgram.hasError()) {
