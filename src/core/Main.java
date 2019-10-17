@@ -1,9 +1,6 @@
 package core;
 
-import instruction.Instruction;
-
 import java.io.File;
-import java.util.List;
 
 public class Main {
 
@@ -26,8 +23,13 @@ public class Main {
 
     Assembler assembler = new Assembler();
 
-    List<Instruction> instructions = assembler.parseProgramFile(programFileName);
-    instructions.stream().forEach(i -> i.execute());
+    ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
+
+    if (!parsedProgram.hasError()) {
+      parsedProgram.getInstructions().stream().forEach(i -> i.execute());
+    } else {
+      System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
+    }
   }
 
 }
