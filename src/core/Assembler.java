@@ -38,6 +38,7 @@ public class Assembler {
   public ParsedProgram parseProgramFile(String programFile) {
     List<Optional<Instruction>> instructions = getLinesFromFile(programFile).stream()
       .map(this::sanitiseLine)
+      .filter(s -> !s.isEmpty())
       .map(this::parseLine)
       .collect(Collectors.toList());
 
@@ -109,7 +110,6 @@ public class Assembler {
         default:
           break;
       }
-
     }
 
     return Optional.empty();
