@@ -5,34 +5,38 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import instruction.DecodedInstruction;
+import instruction.EvaluatedInstruction;
 import instruction.Instruction;
 import instruction.RegisterOperand;
 import instruction.ValueOperand;
+import memory.Register;
 import memory.RegisterFile;
 import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
+import unit.LoadStoreUnit;
 
 public class Processor {
 
   private final ParsedProgram parsedProgram;
 
-  private final Queue<Instruction> instructionQueue;
   private final RegisterFile registerFile;
+  private final Register programCounterRegister;
   private final ArithmeticLogicUnit arithmeticLogicUnit;
-
-  private int programCounter = 0;
+  private final LoadStoreUnit loadStoreUnit;
 
   private Stage currentStage = Stage.FETCH;
 
-  private Instruction currentInstruction;
-  private DecodedInstruction currentDecodedInstruction;
-  private int result;
+  private Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
+  private Queue<DecodedInstruction> executeBuffer = new LinkedList<DecodedInstruction>();
+  private Queue<EvaluatedInstruction> writebackBuffer = new LinkedList<EvaluatedInstruction>();
 
-  public Processor(ParsedProgram parsedProgram) {
+  public Processor(ParsedProgram parsedProgram, int registerFileCapacity) {
     this.parsedProgram = parsedProgram;
-    this.instructionQueue = new LinkedList<Instruction>(parsedProgram.getInstructions());
-    this.registerFile = new RegisterFile(16);
-    this.arithmeticLogicUnit = new ArithmeticLogicUnit();
+    this.registerFile = new RegisterFile(registerFileCapacity);
+    this.arithmeticLogicUnit = new ArithmeticLogicUnit(this);
+    this.loadStoreUnit = new LoadStoreUnit(this);
+    this.programCounterRegister = new Register(registerFileCapacity);
+    this.programCounterRegister.setValue(0);
   }
 
   private enum Stage {
@@ -40,37 +44,65 @@ public class Processor {
   }
 
   public void run() {
-    while(programCounter < parsedProgram.getInstructions().size()) {
+    while(programCounterRegister.getValue() < parsedProgram.getInstructions().size()) {
       tick();
     }
+  }
 
-    /* Dump register status */
-    System.out.print(registerFile.toString());
+  public RegisterFile getRegisterFile() {
+    return registerFile;
+  }
+
+  private DecodedInstruction decodeInstruction(Instruction instruction) {
+    return new DecodedInstruction(instruction, Arrays.stream(instruction.getOperands()).map(o -> {
+        if (o instanceof RegisterOperand) {
+          return new ValueOperand(registerFile.getRegister(o.getValue()).getValue());
+        } else {
+          return o;
+        }
+      }).toArray(ValueOperand[]::new));
   }
 
   public void tick() {
     switch(currentStage) {
       case FETCH:
-        currentInstruction = instructionQueue.poll();
+        decodeBuffer.offer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
         currentStage = Stage.DECODE;
         break;
       case DECODE:
-        currentDecodedInstruction = new DecodedInstruction(currentInstruction, Arrays.stream(currentInstruction.getOperands()).map(o -> {
-          if (o instanceof RegisterOperand) {
-            return new ValueOperand(registerFile.getRegister(o.getValue()).getValue());
-          } else return o;
-        }).toArray(ValueOperand[]::new));
+        if (!decodeBuffer.isEmpty()) {
+          executeBuffer.offer(decodeInstruction(decodeBuffer.poll()));
+        }
         currentStage = Stage.EXECUTE;
         break;
       case EXECUTE:
-        arithmeticLogicUnit.bufferInstruction(currentDecodedInstruction);
-        arithmeticLogicUnit.tick();
-        result = arithmeticLogicUnit.getResult().get();
+        if (!executeBuffer.isEmpty()) {
+          DecodedInstruction toExecute = executeBuffer.poll();
+          switch(toExecute.getEncodedInstruction().getOpcode().getCategory()) {
+            case ARITHMETIC:
+              arithmeticLogicUnit.bufferInstruction(toExecute);
+              arithmeticLogicUnit.tick();
+              writebackBuffer.offer(new EvaluatedInstruction(toExecute, arithmeticLogicUnit.getResult()));
+              break;
+            case MEMORY:
+              loadStoreUnit.bufferInstruction(toExecute);
+              loadStoreUnit.tick();
+              writebackBuffer.offer(new EvaluatedInstruction(toExecute, loadStoreUnit.getResult()));
+              break;
+            case CONTROL:
+              break;
+          }
+        }
         currentStage = Stage.WRITEBACK;
         break;
       case WRITEBACK:
-        registerFile.getRegister(currentInstruction.getOperands()[0].getValue()).setValue(result);
-        programCounter++;
+        if (!writebackBuffer.isEmpty()) {
+          EvaluatedInstruction evaluatedInstruction = writebackBuffer.poll();
+          if (evaluatedInstruction.getResult().isPresent()) {
+            registerFile.getRegister(evaluatedInstruction.getDecodedInstruction().getEncodedInstruction().getOperands()[0].getValue()).setValue(evaluatedInstruction.getResult().get());
+          }
+        }
+        programCounterRegister.setValue(programCounterRegister.getValue() + 1);
         currentStage = Stage.FETCH;
         break;
     }

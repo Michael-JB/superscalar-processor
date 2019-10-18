@@ -21,6 +21,8 @@ import instruction.MoveInstruction;
 import instruction.MultiplyInstruction;
 import instruction.Opcode;
 import instruction.RegisterOperand;
+import instruction.StoreImmediateInstruction;
+import instruction.StoreInstruction;
 import instruction.SubtractImmediateInstruction;
 import instruction.SubtractInstruction;
 import instruction.ValueOperand;
@@ -173,8 +175,8 @@ public class Assembler {
             }
           }
           break;
-        case "ld":
-          opcode = Opcode.LD;
+        case "la":
+          opcode = Opcode.LA;
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
@@ -184,13 +186,34 @@ public class Assembler {
             }
           }
           break;
-        case "ldi":
-          opcode = Opcode.LDI;
+        case "lai":
+          opcode = Opcode.LAI;
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
             Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
             if (operand1.isPresent() && operand2.isPresent()) {
               return Optional.of(new LoadImmediateInstruction(operand1.get(), operand2.get()));
+            }
+          }
+          break;
+        case "sa":
+          opcode = Opcode.SA;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new StoreInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "sai":
+          opcode = Opcode.SAI;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
+            if (operand1.isPresent() && operand2.isPresent()) {
+              return Optional.of(new StoreImmediateInstruction(operand1.get(), operand2.get()));
             }
           }
           break;

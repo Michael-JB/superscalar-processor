@@ -1,6 +1,12 @@
 package unit;
 
+import core.Processor;
+
 public class ArithmeticLogicUnit extends Unit {
+
+  public ArithmeticLogicUnit(Processor processor) {
+    super(processor);
+  }
 
   @Override
   public void tick() {

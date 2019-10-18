@@ -27,11 +27,15 @@ public class Main {
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
 
+    System.out.println("--- PROGRAM START ---");
     System.out.print(parsedProgram.toString());
+    System.out.println("--- PROGRAM END   ---");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram);
+      Processor processor = new Processor(parsedProgram, 16);
       processor.run();
+      /* Dump register status */
+      System.out.print(processor.getRegisterFile().toString());
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }
