@@ -31,4 +31,12 @@ public class ParsedProgram {
   public boolean hasError() {
     return errorLine.isPresent();
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    instructions.stream().forEachOrdered(i -> sb.append(i.toString() + System.lineSeparator()));
+    return sb.toString();
+  }
+
 }

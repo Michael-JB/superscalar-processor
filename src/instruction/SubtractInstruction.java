@@ -7,8 +7,9 @@ public class SubtractInstruction extends Instruction {
   }
 
   @Override
-  public void execute() {
-    System.out.println(this.toString());
+  public int perform(ValueOperand... values) {
+    /* TODO */
+    return 0;
   }
 
 }

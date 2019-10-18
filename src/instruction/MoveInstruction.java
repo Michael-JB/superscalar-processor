@@ -7,8 +7,8 @@ public class MoveInstruction extends Instruction {
   }
 
   @Override
-  public void execute() {
-    System.out.println(this.toString());
+  public int perform(ValueOperand... values) {
+    return values[1].getValue();
   }
 
 }

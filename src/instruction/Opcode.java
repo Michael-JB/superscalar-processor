@@ -10,9 +10,9 @@ public enum Opcode {
   MUL(3),  /* mul  r1 r2 r3 = r1 <- r2 * r3 */
   DIV(3),  /* div  r1 r2 r3 = r1 <- r2 / r3 */
   CMP(3),  /* cmp  r1 r2 r3 = r1 <- {-1 if r2 < r3, 0 if r2 = r3, 1 if r2 > r3} */
+  MOVE(2), /* move r1 v1    = r1 <- v1 */
 
   /* Memory */
-  MOVE(2), /* move r1 v1    = r1 <- v1 */
   LD(3),   /* ld   r1 r2 v1 = r1 <- [r2 + v1] */
   LDI(2),  /* ldi  r1 v1    = r1 <- [v1] */
 

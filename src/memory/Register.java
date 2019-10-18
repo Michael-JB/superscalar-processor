@@ -23,7 +23,7 @@ public class Register {
 
   @Override
   public String toString() {
-    return "r" + value;
+    return "r" + id + ": " + value;
   }
 
 }

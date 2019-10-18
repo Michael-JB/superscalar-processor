@@ -27,8 +27,11 @@ public class Main {
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
 
+    System.out.print(parsedProgram.toString());
+
     if (!parsedProgram.hasError()) {
-      parsedProgram.getInstructions().stream().forEach(i -> i.execute());
+      Processor processor = new Processor(parsedProgram);
+      processor.run();
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }

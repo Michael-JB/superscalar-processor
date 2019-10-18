@@ -26,7 +26,20 @@ public abstract class Instruction {
     return operands;
   }
 
-  public abstract void execute();
+  public boolean canExecute(ValueOperand... values) {
+    return opcode.getOperandCount() == values.length;
+  }
+
+  public int execute(ValueOperand... values) {
+    if (canExecute(values)) {
+      return perform(values);
+    } else {
+      throw new IllegalArgumentException(
+        "Invalid value operand count. " + values.length + " provided, " + opcode.getOperandCount() + " required.");
+    }
+  }
+
+  protected abstract int perform(ValueOperand... values);
 
   @Override
   public String toString() {
