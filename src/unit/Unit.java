@@ -2,7 +2,6 @@ package unit;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.Queue;
 
 import core.Processor;
@@ -15,7 +14,6 @@ public abstract class Unit {
   protected final Processor processor;
 
   protected Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
-  protected Optional<Integer> result = Optional.empty();
 
   public Unit(Processor processor) {
     this.processor = processor;
@@ -23,10 +21,6 @@ public abstract class Unit {
 
   public void bufferInstruction(Instruction instruction) {
     instructionBuffer.offer(instruction);
-  }
-
-  public Optional<Integer> getResult() {
-    return result;
   }
 
   protected Processor getProcessor() {
@@ -42,15 +36,9 @@ public abstract class Unit {
   }
 
   protected Instruction completeCurrentInstruction() {
-    return instructionBuffer.poll();
-  }
-
-  protected void setResult(Integer newResult) {
-    result = Optional.of(newResult);
-  }
-
-  protected void clearResult() {
-    result = Optional.empty();
+    Instruction completed = instructionBuffer.poll();
+    processor.pushToWritebackBuffer(completed);
+    return completed;
   }
 
   protected ValueOperand[] getValuesFromRegisters(Instruction instruction) {

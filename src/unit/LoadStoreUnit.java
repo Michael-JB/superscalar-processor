@@ -30,11 +30,10 @@ public class LoadStoreUnit extends Unit {
 
       if (opcode == Opcode.LA || opcode == Opcode.LAI) {
         /* Load  instructions */
-        setResult(memory[targetAddress]);
+        toExecute.setResult(memory[targetAddress]);
       } else {
         /* Store instructions */
         memory[targetAddress] = inputValues[0].getValue();
-        clearResult();
       }
 
       /* Instruction has now been completed */

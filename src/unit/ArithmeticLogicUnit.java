@@ -22,8 +22,8 @@ public class ArithmeticLogicUnit extends Unit {
       /* Execute instruction */
       int executionResult = toExecute.execute(inputValues);
 
-      /* Update ALU result */
-      setResult(executionResult);
+      /* Update instruction result */
+      toExecute.setResult(executionResult);
 
       /* Instruction has now been completed */
       completeCurrentInstruction();

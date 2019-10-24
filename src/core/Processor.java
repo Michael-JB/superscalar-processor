@@ -48,6 +48,18 @@ public class Processor {
     }
   }
 
+  public void pushToDecodeBuffer(Instruction instruction) {
+    decodeBuffer.offer(instruction);
+  }
+
+  public void pushToExecuteBuffer(Instruction instruction) {
+    executeBuffer.offer(instruction);
+  }
+
+  public void pushToWritebackBuffer(Instruction instruction) {
+    writebackBuffer.offer(instruction);
+  }
+
   public int getCycles() {
     return cycles;
   }
@@ -72,14 +84,18 @@ public class Processor {
   }
 
   public void tick() {
+
+    arithmeticLogicUnit.tick();
+    loadStoreUnit.tick();
+
     switch(currentStage) {
       case FETCH:
-        decodeBuffer.offer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
+        pushToDecodeBuffer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
         currentStage = Stage.DECODE;
         break;
       case DECODE:
         if (!decodeBuffer.isEmpty()) {
-          executeBuffer.offer(decodeInstruction(decodeBuffer.poll()));
+          pushToExecuteBuffer(decodeInstruction(decodeBuffer.poll()));
         }
         currentStage = Stage.EXECUTE;
         break;
@@ -89,15 +105,9 @@ public class Processor {
           switch(toExecute.getOpcode().getCategory()) {
             case ARITHMETIC:
               arithmeticLogicUnit.bufferInstruction(toExecute);
-              arithmeticLogicUnit.tick();
-              arithmeticLogicUnit.getResult().ifPresent(res -> toExecute.setResult(res));
-              writebackBuffer.offer(toExecute);
               break;
             case MEMORY:
               loadStoreUnit.bufferInstruction(toExecute);
-              loadStoreUnit.tick();
-              loadStoreUnit.getResult().ifPresent(res -> toExecute.setResult(res));
-              writebackBuffer.offer(toExecute);
               break;
             case CONTROL:
               break;
@@ -105,7 +115,7 @@ public class Processor {
         }
         currentStage = Stage.WRITEBACK;
         break;
-      case WRITEBACK:
+      case WRITEBACK: /* Constraint: Will only work if execution takes a single cycle */
         if (!writebackBuffer.isEmpty()) {
           Instruction evaluatedInstruction = writebackBuffer.poll();
           evaluatedInstruction.getResult().ifPresent(res -> {
