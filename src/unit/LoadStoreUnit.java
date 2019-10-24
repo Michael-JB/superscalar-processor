@@ -1,7 +1,9 @@
 package unit;
 
 import core.Processor;
+import instruction.Instruction;
 import instruction.Opcode;
+import instruction.ValueOperand;
 
 public class LoadStoreUnit extends Unit {
 
@@ -14,17 +16,25 @@ public class LoadStoreUnit extends Unit {
   @Override
   public void tick() {
     if (hasBufferedInstruction()) {
-      /* Execute instruction */
-      int targetAddress = getCurrentInstruction().execute();
 
-      Opcode opcode = getCurrentInstruction().getEncodedInstruction().getOpcode();
+      /* Get instruction from queue */
+      Instruction toExecute = getCurrentInstruction();
+
+      /* Retrieve operand values from registers */
+      ValueOperand[] inputValues = getValuesFromRegisters(toExecute);
+
+      /* Execute instruction */
+      int targetAddress = toExecute.execute(inputValues);
+
+      Opcode opcode = toExecute.getOpcode();
 
       if (opcode == Opcode.LA || opcode == Opcode.LAI) {
         /* Load  instructions */
         setResult(memory[targetAddress]);
       } else {
         /* Store instructions */
-        memory[targetAddress] = getCurrentInstruction().getDecodedOperands()[0].getValue();
+        memory[targetAddress] = inputValues[0].getValue();
+        clearResult();
       }
 
       /* Instruction has now been completed */

@@ -1,24 +1,27 @@
 package unit;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Queue;
 
 import core.Processor;
-import instruction.DecodedInstruction;
+import instruction.Instruction;
+import instruction.RegisterOperand;
+import instruction.ValueOperand;
 
 public abstract class Unit {
 
   protected final Processor processor;
 
-  protected Queue<DecodedInstruction> instructionBuffer = new LinkedList<DecodedInstruction>();
+  protected Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
   protected Optional<Integer> result = Optional.empty();
 
   public Unit(Processor processor) {
     this.processor = processor;
   }
 
-  public void bufferInstruction(DecodedInstruction instruction) {
+  public void bufferInstruction(Instruction instruction) {
     instructionBuffer.offer(instruction);
   }
 
@@ -34,11 +37,11 @@ public abstract class Unit {
     return !instructionBuffer.isEmpty();
   }
 
-  protected DecodedInstruction getCurrentInstruction() {
+  protected Instruction getCurrentInstruction() {
     return instructionBuffer.peek();
   }
 
-  protected DecodedInstruction completeCurrentInstruction() {
+  protected Instruction completeCurrentInstruction() {
     return instructionBuffer.poll();
   }
 
@@ -48,6 +51,16 @@ public abstract class Unit {
 
   protected void clearResult() {
     result = Optional.empty();
+  }
+
+  protected ValueOperand[] getValuesFromRegisters(Instruction instruction) {
+    return Arrays.stream(instruction.getOperands()).map(o -> {
+      if (o instanceof RegisterOperand) {
+        return new ValueOperand(processor.getRegisterFile().getRegister(o.getValue()).getValue());
+      } else {
+        return o;
+      }
+    }).toArray(ValueOperand[]::new);
   }
 
   public abstract void tick();

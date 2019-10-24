@@ -1,14 +1,12 @@
 package core;
 
-import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Queue;
 
-import instruction.DecodedInstruction;
-import instruction.EvaluatedInstruction;
 import instruction.Instruction;
+import instruction.Operand;
 import instruction.RegisterOperand;
-import instruction.ValueOperand;
 import memory.Register;
 import memory.RegisterFile;
 import parse.ParsedProgram;
@@ -25,10 +23,11 @@ public class Processor {
   private final LoadStoreUnit loadStoreUnit;
 
   private Stage currentStage = Stage.FETCH;
+  private int cycles = 0;
 
   private Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
-  private Queue<DecodedInstruction> executeBuffer = new LinkedList<DecodedInstruction>();
-  private Queue<EvaluatedInstruction> writebackBuffer = new LinkedList<EvaluatedInstruction>();
+  private Queue<Instruction> executeBuffer = new LinkedList<Instruction>();
+  private Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
 
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity) {
     this.parsedProgram = parsedProgram;
@@ -49,18 +48,27 @@ public class Processor {
     }
   }
 
+  public int getCycles() {
+    return cycles;
+  }
+
   public RegisterFile getRegisterFile() {
     return registerFile;
   }
 
-  private DecodedInstruction decodeInstruction(Instruction instruction) {
-    return new DecodedInstruction(instruction, Arrays.stream(instruction.getOperands()).map(o -> {
-        if (o instanceof RegisterOperand) {
-          return new ValueOperand(registerFile.getRegister(o.getValue()).getValue());
-        } else {
-          return o;
-        }
-      }).toArray(ValueOperand[]::new));
+  private Instruction decodeInstruction(Instruction instruction) {
+    return instruction;
+  }
+
+  private Optional<Integer> getDestinationRegister(Instruction instruction) {
+    Operand[] instructionOperands = instruction.getOperands();
+    if (instructionOperands.length > 0) {
+      Operand firstOperand = instructionOperands[0];
+      if (firstOperand instanceof RegisterOperand) {
+        return Optional.of(firstOperand.getValue());
+      }
+    }
+    return Optional.empty();
   }
 
   public void tick() {
@@ -77,17 +85,19 @@ public class Processor {
         break;
       case EXECUTE:
         if (!executeBuffer.isEmpty()) {
-          DecodedInstruction toExecute = executeBuffer.poll();
-          switch(toExecute.getEncodedInstruction().getOpcode().getCategory()) {
+          Instruction toExecute = executeBuffer.poll();
+          switch(toExecute.getOpcode().getCategory()) {
             case ARITHMETIC:
               arithmeticLogicUnit.bufferInstruction(toExecute);
               arithmeticLogicUnit.tick();
-              writebackBuffer.offer(new EvaluatedInstruction(toExecute, arithmeticLogicUnit.getResult()));
+              arithmeticLogicUnit.getResult().ifPresent(res -> toExecute.setResult(res));
+              writebackBuffer.offer(toExecute);
               break;
             case MEMORY:
               loadStoreUnit.bufferInstruction(toExecute);
               loadStoreUnit.tick();
-              writebackBuffer.offer(new EvaluatedInstruction(toExecute, loadStoreUnit.getResult()));
+              loadStoreUnit.getResult().ifPresent(res -> toExecute.setResult(res));
+              writebackBuffer.offer(toExecute);
               break;
             case CONTROL:
               break;
@@ -97,15 +107,17 @@ public class Processor {
         break;
       case WRITEBACK:
         if (!writebackBuffer.isEmpty()) {
-          EvaluatedInstruction evaluatedInstruction = writebackBuffer.poll();
-          if (evaluatedInstruction.getResult().isPresent()) {
-            registerFile.getRegister(evaluatedInstruction.getDecodedInstruction().getEncodedInstruction().getOperands()[0].getValue()).setValue(evaluatedInstruction.getResult().get());
-          }
+          Instruction evaluatedInstruction = writebackBuffer.poll();
+          evaluatedInstruction.getResult().ifPresent(res -> {
+            Optional<Integer> destinationRegister = getDestinationRegister(evaluatedInstruction);
+            destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
+          });
         }
         programCounterRegister.setValue(programCounterRegister.getValue() + 1);
         currentStage = Stage.FETCH;
         break;
     }
+    cycles++;
   }
 
 }

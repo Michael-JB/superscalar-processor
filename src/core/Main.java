@@ -26,16 +26,27 @@ public class Main {
 
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
+    String outputSep = "------------------------------ ";
 
-    System.out.println("--- PROGRAM START ---");
+    System.out.println(outputSep + "PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
-    System.out.println("--- PROGRAM END   ---");
+    System.out.println(outputSep + "PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
       Processor processor = new Processor(parsedProgram, 16);
       processor.run();
       /* Dump register status */
+      System.out.println(outputSep + "REGISTER STATUS START");
       System.out.print(processor.getRegisterFile().toString());
+      System.out.println(outputSep + "REGISTER STATUS END");
+      int instructionCount = parsedProgram.getInstructionCount();
+      int cycles = processor.getCycles();
+      int cyclesPerInstruction = cycles / instructionCount;
+      System.out.println(outputSep + "ANALYTICS START");
+      System.out.println("Program instructions: " + instructionCount);
+      System.out.println("Cycles taken: " + cycles);
+      System.out.println("Cycles per instruction: " + cyclesPerInstruction);
+      System.out.println(outputSep + "ANALYTICS END");
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }

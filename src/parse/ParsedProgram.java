@@ -20,6 +20,10 @@ public class ParsedProgram {
     this.errorLine = Optional.empty();
   }
 
+  public int getInstructionCount() {
+    return instructions.size();
+  }
+
   public List<Instruction> getInstructions() {
     return instructions;
   }

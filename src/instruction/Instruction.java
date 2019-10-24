@@ -1,12 +1,14 @@
 package instruction;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class Instruction {
 
   protected final Opcode opcode;
   protected final Operand[] operands;
+  protected Optional<Integer> result = Optional.empty();
 
   public Instruction(Opcode opcode, Operand... operands) {
     this.opcode = opcode;
@@ -24,6 +26,14 @@ public abstract class Instruction {
 
   public Operand[] getOperands() {
     return operands;
+  }
+
+  public Optional<Integer> getResult() {
+    return result;
+  }
+
+  public void setResult(int result) {
+    this.result = Optional.of(result);
   }
 
   public boolean canExecute(ValueOperand... values) {
