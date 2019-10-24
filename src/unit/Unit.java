@@ -12,6 +12,7 @@ import instruction.ValueOperand;
 public abstract class Unit {
 
   protected final Processor processor;
+  protected int delayCounter = 0;
 
   protected Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
 
@@ -35,9 +36,22 @@ public abstract class Unit {
     return instructionBuffer.peek();
   }
 
+  protected void incrementDelayCounter() {
+    delayCounter++;
+  }
+
+  protected int getDelayCounter() {
+    return delayCounter;
+  }
+
+  protected void resetDelayCounter() {
+    delayCounter = 0;
+  }
+
   protected Instruction completeCurrentInstruction() {
     Instruction completed = instructionBuffer.poll();
     processor.pushToWritebackBuffer(completed);
+    resetDelayCounter();
     return completed;
   }
 

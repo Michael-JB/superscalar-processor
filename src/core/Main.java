@@ -33,7 +33,7 @@ public class Main {
     System.out.println(outputSep + "PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, 16);
+      Processor processor = new Processor(parsedProgram, 8);
       processor.run();
       /* Dump register status */
       System.out.println(outputSep + "REGISTER STATUS START");

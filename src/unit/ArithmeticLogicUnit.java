@@ -16,18 +16,21 @@ public class ArithmeticLogicUnit extends Unit {
       /* Get instruction from queue */
       Instruction toExecute = getCurrentInstruction();
 
-      /* Retrieve operand values from registers */
-      ValueOperand[] inputValues = getValuesFromRegisters(toExecute);
+      if (getDelayCounter() == 0) {
+        /* Retrieve operand values from registers */
+        ValueOperand[] inputValues = getValuesFromRegisters(toExecute);
+        /* Execute instruction */
+        int executionResult = toExecute.execute(inputValues);
+        /* Update instruction result */
+        toExecute.setResult(executionResult);
+      }
 
-      /* Execute instruction */
-      int executionResult = toExecute.execute(inputValues);
+      incrementDelayCounter();
 
-      /* Update instruction result */
-      toExecute.setResult(executionResult);
-
-      /* Instruction has now been completed */
-      completeCurrentInstruction();
+      if (getDelayCounter() >= toExecute.getOpcode().getLatency()) {
+        /* Instruction has now been completed */
+        completeCurrentInstruction();
+      }
     }
   }
-
 }
