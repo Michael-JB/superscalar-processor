@@ -43,9 +43,15 @@ public class Processor {
   }
 
   public void run() {
-    while(programCounterRegister.getValue() < parsedProgram.getInstructions().size()) {
+    while(isProcessing()) {
       tick();
     }
+  }
+
+  private boolean isProcessing() {
+    return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !executeBuffer.isEmpty()
+      || !writebackBuffer.isEmpty() || arithmeticLogicUnit.hasBufferedInstruction()
+      || loadStoreUnit.hasBufferedInstruction();
   }
 
   public void pushToDecodeBuffer(Instruction instruction) {
@@ -83,6 +89,10 @@ public class Processor {
     return Optional.empty();
   }
 
+  private boolean hasReachedProgramEnd() {
+    return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
+  }
+
   public void tick() {
 
     arithmeticLogicUnit.tick();
@@ -90,7 +100,10 @@ public class Processor {
 
     switch(currentStage) {
       case FETCH:
-        pushToDecodeBuffer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
+        if (!hasReachedProgramEnd()) {
+          pushToDecodeBuffer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
+          programCounterRegister.setValue(programCounterRegister.getValue() + 1);
+        }
         currentStage = Stage.DECODE;
         break;
       case DECODE:
@@ -115,7 +128,7 @@ public class Processor {
         }
         currentStage = Stage.WRITEBACK;
         break;
-      case WRITEBACK: /* Constraint: Will only work if execution takes a single cycle */
+      case WRITEBACK:
         if (!writebackBuffer.isEmpty()) {
           Instruction evaluatedInstruction = writebackBuffer.poll();
           evaluatedInstruction.getResult().ifPresent(res -> {
@@ -123,7 +136,6 @@ public class Processor {
             destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
           });
         }
-        programCounterRegister.setValue(programCounterRegister.getValue() + 1);
         currentStage = Stage.FETCH;
         break;
     }

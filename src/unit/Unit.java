@@ -27,7 +27,7 @@ public abstract class Unit {
     return processor;
   }
 
-  protected boolean hasBufferedInstruction() {
+  public boolean hasBufferedInstruction() {
     return !instructionBuffer.isEmpty();
   }
 
