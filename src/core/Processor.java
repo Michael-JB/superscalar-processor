@@ -14,7 +14,7 @@ import unit.ArithmeticLogicUnit;
 import unit.BranchUnit;
 import unit.LoadStoreUnit;
 
-public class Processor {
+public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
 
   private final ParsedProgram parsedProgram;
 

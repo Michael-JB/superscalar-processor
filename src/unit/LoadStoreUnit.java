@@ -7,10 +7,31 @@ import instruction.ValueOperand;
 
 public class LoadStoreUnit extends Unit {
 
-  private final int[] memory = new int[100]; // TODO - check for out of bounds memory access
+  private final int memorySize = 100;
+  private final int[] memory = new int[memorySize];
 
   public LoadStoreUnit(Processor processor) {
     super(processor);
+  }
+
+  private boolean isInMemoryBounds(int address) {
+    return address >= 0 && address < memorySize;
+  }
+
+  private int readFromMemory(int address) {
+    if (isInMemoryBounds(address)) {
+      return memory[address];
+    } else {
+      throw new ArrayIndexOutOfBoundsException("Memory address out of bounds: " + address);
+    }
+  }
+
+  private void storeToMemory(int address, int value) {
+    if (isInMemoryBounds(address)) {
+      memory[address] = value;
+    } else {
+      throw new ArrayIndexOutOfBoundsException("Memory address out of bounds: " + address);
+    }
   }
 
   @Override
@@ -28,10 +49,10 @@ public class LoadStoreUnit extends Unit {
 
         if (opcode == Opcode.LA || opcode == Opcode.LAI) {
           /* Load  instructions */
-          toExecute.setResult(memory[targetAddress]);
+          toExecute.setResult(readFromMemory(targetAddress));
         } else {
           /* Store instructions */
-          memory[targetAddress] = inputValues[0].getValue();
+          storeToMemory(targetAddress, inputValues[0].getValue());
         }
       }
 
