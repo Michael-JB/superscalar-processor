@@ -19,8 +19,12 @@ public enum Opcode {
   SAI(OpcodeCategory.MEMORY, 2, 1),      /* sai  r1 v1    = [v1] <- r1 */
 
   /* Control */
-  BEQ(OpcodeCategory.CONTROL, 3, 1),     /* beq  r1 r2 v1 = PC -= {v1 if r1 = r2, 0 if r1 != r2} */
-  BNE(OpcodeCategory.CONTROL, 3, 1),     /* bne  r1 r2 v1 = PC -= {0 if r1 = r2, v1 if r1 != r2} */
+  BEQ(OpcodeCategory.CONTROL, 3, 1),     /* beq  r1 r2 v1 = PC -= {v1 if r1 = r2, 0 otherwise} */
+  BNE(OpcodeCategory.CONTROL, 3, 1),     /* bne  r1 r2 v1 = PC -= {v1 if r1 != r2, 0 otherwise} */
+  BGT(OpcodeCategory.CONTROL, 3, 1),     /* bgt  r1 r2 v1 = PC -= {v1 if r1 > r2, 0 otherwise} */
+  BGE(OpcodeCategory.CONTROL, 3, 1),     /* bge  r1 r2 v1 = PC -= {v1 if r1 >= r2, 0 otherwise} */
+  BLT(OpcodeCategory.CONTROL, 3, 1),     /* blt  r1 r2 v1 = PC -= {v1 if r1 < r2, 0 otherwise} */
+  BLE(OpcodeCategory.CONTROL, 3, 1),     /* ble  r1 r2 v1 = PC -= {v1 if r1 <= r2, 0 otherwise} */
   JMP(OpcodeCategory.CONTROL, 1, 1),     /* jmp v1        = PC <- v1 */
   JMPR(OpcodeCategory.CONTROL, 1, 1),    /* jmpr r1       = PC <- r1 */
   ;
