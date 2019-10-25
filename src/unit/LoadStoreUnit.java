@@ -35,34 +35,20 @@ public class LoadStoreUnit extends Unit {
   }
 
   @Override
-  public void tick() {
-    if (hasBufferedInstruction()) {
-      /* Get instruction from queue */
-      Instruction toExecute = getCurrentInstruction();
-      Opcode opcode = toExecute.getOpcode();
+  public void process(Instruction instruction) {
+    /* Retrieve operand values from registers */
+    ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    Opcode opcode = instruction.getOpcode();
 
-      if (getDelayCounter() == 0) {
-        /* Retrieve operand values from registers */
-        ValueOperand[] inputValues = getValuesFromRegisters(toExecute);
-        /* Execute instruction */
-        int targetAddress = toExecute.execute(inputValues);
+    /* Execute instruction */
+    int targetAddress = instruction.execute(inputValues);
 
-        if (opcode == Opcode.LA || opcode == Opcode.LAI) {
-          /* Load  instructions */
-          toExecute.setResult(readFromMemory(targetAddress));
-        } else {
-          /* Store instructions */
-          storeToMemory(targetAddress, inputValues[0].getValue());
-        }
-      }
-
-      incrementDelayCounter();
-
-      if (getDelayCounter() >= opcode.getLatency()) {
-        /* Instruction has now been completed */
-        completeCurrentInstruction();
-      }
+    if (opcode == Opcode.LA || opcode == Opcode.LAI) {
+      /* Load  instructions */
+      instruction.setResult(readFromMemory(targetAddress));
+    } else {
+      /* Store instructions */
+      storeToMemory(targetAddress, inputValues[0].getValue());
     }
   }
-
 }

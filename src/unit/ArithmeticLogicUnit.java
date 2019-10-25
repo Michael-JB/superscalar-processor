@@ -11,26 +11,12 @@ public class ArithmeticLogicUnit extends Unit {
   }
 
   @Override
-  public void tick() {
-    if (hasBufferedInstruction()) {
-      /* Get instruction from queue */
-      Instruction toExecute = getCurrentInstruction();
-
-      if (getDelayCounter() == 0) {
-        /* Retrieve operand values from registers */
-        ValueOperand[] inputValues = getValuesFromRegisters(toExecute);
-        /* Execute instruction */
-        int executionResult = toExecute.execute(inputValues);
-        /* Update instruction result */
-        toExecute.setResult(executionResult);
-      }
-
-      incrementDelayCounter();
-
-      if (getDelayCounter() >= toExecute.getOpcode().getLatency()) {
-        /* Instruction has now been completed */
-        completeCurrentInstruction();
-      }
-    }
+  public void process(Instruction instruction) {
+    /* Retrieve operand values from registers */
+    ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    /* Execute instruction */
+    int executionResult = instruction.execute(inputValues);
+    /* Update instruction result */
+    instruction.setResult(executionResult);
   }
 }

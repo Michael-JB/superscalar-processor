@@ -32,23 +32,23 @@ public abstract class Unit {
     return !instructionBuffer.isEmpty();
   }
 
-  protected Instruction getCurrentInstruction() {
+  private Instruction getCurrentInstruction() {
     return instructionBuffer.peek();
   }
 
-  protected void incrementDelayCounter() {
+  private void incrementDelayCounter() {
     delayCounter++;
   }
 
-  protected int getDelayCounter() {
+  private int getDelayCounter() {
     return delayCounter;
   }
 
-  protected void resetDelayCounter() {
+  private void resetDelayCounter() {
     delayCounter = 0;
   }
 
-  protected Instruction completeCurrentInstruction() {
+  private Instruction completeCurrentInstruction() {
     Instruction completed = instructionBuffer.poll();
     processor.pushToWritebackBuffer(completed);
     resetDelayCounter();
@@ -65,6 +65,26 @@ public abstract class Unit {
     }).toArray(ValueOperand[]::new);
   }
 
-  public abstract void tick();
+  public void tick() {
+    if (hasBufferedInstruction()) {
+      /* Get instruction from queue */
+      Instruction toExecute = getCurrentInstruction();
+
+      /* Process instruction on first tick */
+      if (getDelayCounter() == 0) {
+        process(toExecute);
+      }
+
+      /* Increment delay counter on each tick, until latency reached */
+      incrementDelayCounter();
+
+      if (getDelayCounter() >= toExecute.getOpcode().getLatency()) {
+        /* Instruction has now been completed */
+        completeCurrentInstruction();
+      }
+    }
+  }
+
+  public abstract void process(Instruction instruction);
 
 }

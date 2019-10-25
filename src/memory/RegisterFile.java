@@ -22,8 +22,12 @@ public class RegisterFile {
     return capacity;
   }
 
+  private boolean isRegisterInFile(int index) {
+    return index >= 0 && index < capacity;
+  }
+
   public Register getRegister(int index) {
-    if (index >= 0 && index < capacity) {
+    if (isRegisterInFile(index)) {
       return registers.get(index);
     } else {
       throw new IllegalArgumentException("Cannot access register: index out of bounds");
