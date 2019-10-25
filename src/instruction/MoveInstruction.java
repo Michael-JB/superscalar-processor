@@ -3,7 +3,7 @@ package instruction;
 public class MoveInstruction extends Instruction {
 
   public MoveInstruction(RegisterOperand dest, ValueOperand val) {
-    super(Opcode.MOVE, new Operand[] { dest, val });
+    super(Opcode.MOVE, dest, val);
   }
 
   @Override

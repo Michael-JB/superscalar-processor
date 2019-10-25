@@ -3,7 +3,7 @@ package instruction;
 public class StoreImmediateInstruction extends Instruction {
 
   public StoreImmediateInstruction(RegisterOperand val, ValueOperand addr) {
-    super(Opcode.SAI, new Operand[] { val, addr });
+    super(Opcode.SAI, val, addr);
   }
 
   @Override

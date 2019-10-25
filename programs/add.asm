@@ -1,4 +1,4 @@
-move r1 5    # r2 <- 5
-move r2 6    # r3 <- 5
+move r0 5    # r0 <- 5
+move r1 6    # r1 <- 6
 
-add r0 r1 r2 # r1 <- r2 + r3
+add r2 r0 r1 # r2 <- r0 + r1

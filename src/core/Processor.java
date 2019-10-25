@@ -11,6 +11,7 @@ import memory.Register;
 import memory.RegisterFile;
 import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
+import unit.BranchUnit;
 import unit.LoadStoreUnit;
 
 public class Processor {
@@ -21,6 +22,7 @@ public class Processor {
   private final Register programCounterRegister;
   private final ArithmeticLogicUnit arithmeticLogicUnit;
   private final LoadStoreUnit loadStoreUnit;
+  private final BranchUnit branchUnit;
 
   private Stage currentStage = Stage.FETCH;
   private int cycles = 0;
@@ -34,6 +36,7 @@ public class Processor {
     this.registerFile = new RegisterFile(registerFileCapacity);
     this.arithmeticLogicUnit = new ArithmeticLogicUnit(this);
     this.loadStoreUnit = new LoadStoreUnit(this);
+    this.branchUnit = new BranchUnit(this);
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
   }
@@ -66,6 +69,10 @@ public class Processor {
     writebackBuffer.offer(instruction);
   }
 
+  public Register getProgramCounter() {
+    return programCounterRegister;
+  }
+
   public int getCycles() {
     return cycles;
   }
@@ -93,16 +100,20 @@ public class Processor {
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
 
-  public void tick() {
-
+  private void tickUnits() {
     arithmeticLogicUnit.tick();
     loadStoreUnit.tick();
+    branchUnit.tick();
+  }
+
+  public void tick() {
+    tickUnits();
 
     switch(currentStage) {
       case FETCH:
         if (!hasReachedProgramEnd()) {
-          pushToDecodeBuffer(parsedProgram.getInstructions().get(programCounterRegister.getValue()));
-          programCounterRegister.setValue(programCounterRegister.getValue() + 1);
+          pushToDecodeBuffer(parsedProgram.getInstructions().get(getProgramCounter().getValue()));
+          getProgramCounter().setValue(getProgramCounter().getValue() + 1);
         }
         currentStage = Stage.DECODE;
         break;
@@ -123,6 +134,7 @@ public class Processor {
               loadStoreUnit.bufferInstruction(toExecute);
               break;
             case CONTROL:
+              branchUnit.bufferInstruction(toExecute);
               break;
           }
         }

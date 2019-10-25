@@ -15,6 +15,7 @@ import instruction.AddImmediateInstruction;
 import instruction.AddInstruction;
 import instruction.DivideInstruction;
 import instruction.Instruction;
+import instruction.JumpInstruction;
 import instruction.LoadImmediateInstruction;
 import instruction.LoadInstruction;
 import instruction.MoveInstruction;
@@ -214,6 +215,15 @@ public class Assembler {
             Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
             if (operand1.isPresent() && operand2.isPresent()) {
               return Optional.of(new StoreImmediateInstruction(operand1.get(), operand2.get()));
+            }
+          }
+          break;
+        case "jmp":
+          opcode = Opcode.JMP;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<ValueOperand> operand1 = parseValueOperand(tokens[1]);
+            if (operand1.isPresent()) {
+              return Optional.of(new JumpInstruction(operand1.get()));
             }
           }
           break;

@@ -3,7 +3,7 @@ package instruction;
 public class AddInstruction extends Instruction {
 
   public AddInstruction(RegisterOperand dest, RegisterOperand srcA, RegisterOperand srcB) {
-    super(Opcode.ADD, new Operand[] { dest, srcA, srcB });
+    super(Opcode.ADD, dest, srcA, srcB);
   }
 
   @Override

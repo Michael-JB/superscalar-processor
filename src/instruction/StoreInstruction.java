@@ -3,7 +3,7 @@ package instruction;
 public class StoreInstruction extends Instruction {
 
   public StoreInstruction(RegisterOperand val, RegisterOperand base, ValueOperand off) {
-    super(Opcode.SA, new Operand[] { val, base, off });
+    super(Opcode.SA, val, base, off);
   }
 
   @Override
