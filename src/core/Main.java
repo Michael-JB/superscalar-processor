@@ -34,11 +34,12 @@ public class Main {
 
     if (!parsedProgram.hasError()) {
       Processor processor = new Processor(parsedProgram, 8);
+      System.out.println(outputSep + "PROGRAM RUN START");
       processor.run();
-      /* Dump register status */
-      System.out.println(outputSep + "REGISTER STATUS START");
+      System.out.println(outputSep + "PROGRAM RUN END");
+      System.out.println(outputSep + "REGISTER DUMP START");
       System.out.print(processor.getRegisterFile().toString());
-      System.out.println(outputSep + "REGISTER STATUS END");
+      System.out.println(outputSep + "REGISTER DUMP END");
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();
       int cycles = processor.getCycleCount();
