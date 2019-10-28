@@ -28,6 +28,7 @@ import instruction.LoadImmediateInstruction;
 import instruction.LoadInstruction;
 import instruction.MoveInstruction;
 import instruction.MultiplyInstruction;
+import instruction.NoOperationInstruction;
 import instruction.Opcode;
 import instruction.RegisterOperand;
 import instruction.StoreImmediateInstruction;
@@ -319,6 +320,12 @@ public class Assembler {
             if (operand1.isPresent()) {
               return Optional.of(new JumpRegisterInstruction(operand1.get()));
             }
+          }
+          break;
+        case "nop":
+          opcode = Opcode.NOP;
+          if (tokens.length > opcode.getOperandCount()) {
+            return Optional.of(new NoOperationInstruction());
           }
           break;
         default:
