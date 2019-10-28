@@ -15,8 +15,8 @@ public class ArithmeticLogicUnit extends Unit {
     /* Retrieve operand values from registers */
     ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     /* Execute instruction */
-    int executionResult = instruction.execute(inputValues);
+    int executionResult = instruction.evaluate(inputValues);
     /* Update instruction result */
-    instruction.setResult(executionResult);
+    instruction.setWritebackResult(executionResult);
   }
 }

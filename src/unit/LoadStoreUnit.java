@@ -41,11 +41,11 @@ public class LoadStoreUnit extends Unit {
     Opcode opcode = instruction.getOpcode();
 
     /* Execute instruction */
-    int targetAddress = instruction.execute(inputValues);
+    int targetAddress = instruction.evaluate(inputValues);
 
     if (opcode == Opcode.LA || opcode == Opcode.LAI) {
       /* Load  instructions */
-      instruction.setResult(readFromMemory(targetAddress));
+      instruction.setWritebackResult(readFromMemory(targetAddress));
     } else {
       /* Store instructions */
       storeToMemory(targetAddress, inputValues[0].getValue());

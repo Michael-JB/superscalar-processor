@@ -7,7 +7,7 @@ public class DivideInstruction extends Instruction {
   }
 
   @Override
-  public int perform(ValueOperand... values) {
+  public int eval(ValueOperand... values) {
     /* TODO */
     return 0;
   }

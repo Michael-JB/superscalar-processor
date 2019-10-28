@@ -143,7 +143,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       case WRITEBACK:
         if (!writebackBuffer.isEmpty()) {
           Instruction evaluatedInstruction = writebackBuffer.poll();
-          evaluatedInstruction.getResult().ifPresent(res -> {
+          evaluatedInstruction.getWritebackResult().ifPresent(res -> {
             Optional<Integer> destinationRegister = getDestinationRegister(evaluatedInstruction);
             destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
           });

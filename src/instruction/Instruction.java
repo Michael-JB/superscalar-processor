@@ -8,7 +8,7 @@ public abstract class Instruction {
 
   protected final Opcode opcode;
   protected final Operand[] operands;
-  protected Optional<Integer> result = Optional.empty();
+  protected Optional<Integer> writebackResult = Optional.empty();
 
   public Instruction(Opcode opcode, Operand... operands) {
     this.opcode = opcode;
@@ -28,28 +28,28 @@ public abstract class Instruction {
     return operands;
   }
 
-  public Optional<Integer> getResult() {
-    return result;
+  public Optional<Integer> getWritebackResult() {
+    return writebackResult;
   }
 
-  public void setResult(int result) {
-    this.result = Optional.of(result);
+  public void setWritebackResult(int result) {
+    this.writebackResult = Optional.of(result);
   }
 
   public boolean canExecute(ValueOperand... values) {
     return opcode.getOperandCount() == values.length;
   }
 
-  public int execute(ValueOperand... values) {
+  public int evaluate(ValueOperand... values) {
     if (canExecute(values)) {
-      return perform(values);
+      return eval(values);
     } else {
       throw new IllegalArgumentException(
         "Invalid value operand count. " + values.length + " provided, " + opcode.getOperandCount() + " required.");
     }
   }
 
-  protected abstract int perform(ValueOperand... values);
+  protected abstract int eval(ValueOperand... values);
 
   @Override
   public String toString() {

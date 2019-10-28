@@ -2,7 +2,9 @@ package unit;
 
 import core.Processor;
 import instruction.Instruction;
+import instruction.Opcode;
 import instruction.ValueOperand;
+import memory.Register;
 
 public class BranchUnit extends Unit {
 
@@ -14,11 +16,22 @@ public class BranchUnit extends Unit {
   public void process(Instruction instruction) {
     /* Retrieve operand values from registers */
     ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    Opcode opcode = instruction.getOpcode();
     /* Execute instruction */
-    int executionResult = instruction.execute(inputValues);
+    int executionResult = instruction.evaluate(inputValues);
     /* Update instruction result */
-    instruction.setResult(executionResult);
+    // instruction.setResult(executionResult);
 
-    processor.getProgramCounter().setValue(executionResult);
+    Register programCounterRegister = processor.getProgramCounter();
+
+    if (opcode == Opcode.JMP || opcode == Opcode.JMPR) {
+      /* Jump instruction, so update program counter absolutely */
+      programCounterRegister.setValue(executionResult);
+    } else {
+      /* Branch instruction, so update program counter relatively */
+      programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
+    }
+
+
   }
 }

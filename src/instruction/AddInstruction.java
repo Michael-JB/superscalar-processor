@@ -7,7 +7,7 @@ public class AddInstruction extends Instruction {
   }
 
   @Override
-  public int perform(ValueOperand... values) {
+  public int eval(ValueOperand... values) {
     return values[1].getValue() + values[2].getValue();
   }
 
