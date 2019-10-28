@@ -29,8 +29,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
 
   private Stage currentStage = Stage.FETCH;
-  private int cycles = 0;
-
+  private int cycleCount = 0, executedInstructionCount = 0;
 
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity) {
     this.parsedProgram = parsedProgram;
@@ -55,7 +54,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private boolean isProcessing() {
     return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !executeBuffer.isEmpty()
       || !writebackBuffer.isEmpty() || arithmeticLogicUnit.hasBufferedInstruction()
-      || loadStoreUnit.hasBufferedInstruction();
+      || loadStoreUnit.hasBufferedInstruction() || branchUnit.hasBufferedInstruction();
   }
 
   public void pushToDecodeBuffer(Instruction instruction) {
@@ -74,8 +73,12 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     return programCounterRegister;
   }
 
-  public int getCycles() {
-    return cycles;
+  public int getCycleCount() {
+    return cycleCount;
+  }
+
+  public int getExecutedInstructionCount() {
+    return executedInstructionCount;
   }
 
   public RegisterFile getRegisterFile() {
@@ -138,6 +141,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
               branchUnit.bufferInstruction(toExecute);
               break;
           }
+          executedInstructionCount++;
         }
         currentStage = Stage.WRITEBACK;
         break;
@@ -152,7 +156,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
         currentStage = Stage.FETCH;
         break;
     }
-    cycles++;
+    cycleCount++;
   }
 
 }

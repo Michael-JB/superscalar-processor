@@ -40,10 +40,12 @@ public class Main {
       System.out.print(processor.getRegisterFile().toString());
       System.out.println(outputSep + "REGISTER STATUS END");
       int instructionCount = parsedProgram.getInstructionCount();
-      int cycles = processor.getCycles();
-      int cyclesPerInstruction = cycles / instructionCount;
+      int executedInstructionCount = processor.getExecutedInstructionCount();
+      int cycles = processor.getCycleCount();
+      float cyclesPerInstruction = cycles / executedInstructionCount;
       System.out.println(outputSep + "ANALYTICS START");
       System.out.println("Program instructions: " + instructionCount);
+      System.out.println("Executed instructions: " + executedInstructionCount);
       System.out.println("Cycles taken: " + cycles);
       System.out.println("Cycles per instruction: " + cyclesPerInstruction);
       System.out.println(outputSep + "ANALYTICS END");
