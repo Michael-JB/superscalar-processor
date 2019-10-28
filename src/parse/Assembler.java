@@ -13,9 +13,17 @@ import java.util.stream.Collectors;
 
 import instruction.AddImmediateInstruction;
 import instruction.AddInstruction;
+import instruction.BranchEqualInstruction;
+import instruction.BranchGreaterThanInstruction;
+import instruction.BranchGreaterThanOrEqualInstruction;
+import instruction.BranchLessThanInstruction;
+import instruction.BranchLessThanOrEqualInstruction;
+import instruction.BranchNotEqualInstruction;
+import instruction.CompareInstruction;
 import instruction.DivideInstruction;
 import instruction.Instruction;
 import instruction.JumpInstruction;
+import instruction.JumpRegisterInstruction;
 import instruction.LoadImmediateInstruction;
 import instruction.LoadInstruction;
 import instruction.MoveInstruction;
@@ -166,6 +174,17 @@ public class Assembler {
             }
           }
           break;
+        case "cmp":
+          opcode = Opcode.CMP;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<RegisterOperand> operand3 = parseRegisterOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new CompareInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
         case "move":
           opcode = Opcode.MOVE;
           if (tokens.length > opcode.getOperandCount()) {
@@ -218,12 +237,87 @@ public class Assembler {
             }
           }
           break;
+        case "beq":
+          opcode = Opcode.BEQ;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "bne":
+          opcode = Opcode.BNE;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchNotEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "bgt":
+          opcode = Opcode.BGT;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchGreaterThanInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "bge":
+          opcode = Opcode.BGE;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchGreaterThanOrEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "blt":
+          opcode = Opcode.BLT;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchLessThanInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
+        case "ble":
+          opcode = Opcode.BLE;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2]);
+            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
+              return Optional.of(new BranchLessThanOrEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
+            }
+          }
+          break;
         case "jmp":
           opcode = Opcode.JMP;
           if (tokens.length > opcode.getOperandCount()) {
             Optional<ValueOperand> operand1 = parseValueOperand(tokens[1]);
             if (operand1.isPresent()) {
               return Optional.of(new JumpInstruction(operand1.get()));
+            }
+          }
+          break;
+        case "jmpr":
+          opcode = Opcode.JMPR;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1]);
+            if (operand1.isPresent()) {
+              return Optional.of(new JumpRegisterInstruction(operand1.get()));
             }
           }
           break;

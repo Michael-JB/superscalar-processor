@@ -19,8 +19,6 @@ public class BranchUnit extends Unit {
     Opcode opcode = instruction.getOpcode();
     /* Execute instruction */
     int executionResult = instruction.evaluate(inputValues);
-    /* Update instruction result */
-    // instruction.setResult(executionResult);
 
     Register programCounterRegister = processor.getProgramCounter();
 

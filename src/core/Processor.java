@@ -24,12 +24,13 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final LoadStoreUnit loadStoreUnit;
   private final BranchUnit branchUnit;
 
+  private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
+  private final Queue<Instruction> executeBuffer = new LinkedList<Instruction>();
+  private final Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
+
   private Stage currentStage = Stage.FETCH;
   private int cycles = 0;
 
-  private Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
-  private Queue<Instruction> executeBuffer = new LinkedList<Instruction>();
-  private Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
 
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity) {
     this.parsedProgram = parsedProgram;
