@@ -8,8 +8,13 @@ public class CompareInstruction extends Instruction {
 
   @Override
   public int eval(ValueOperand... values) {
-    /* TODO */
-    return 0;
+    if (values[1].getValue() < values[2].getValue()) {
+      return -1;
+    } else if (values[1].getValue() > values[2].getValue()) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
 
 }

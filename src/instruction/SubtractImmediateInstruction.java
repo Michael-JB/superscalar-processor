@@ -8,8 +8,7 @@ public class SubtractImmediateInstruction extends Instruction {
 
   @Override
   public int eval(ValueOperand... values) {
-    /* TODO */
-    return 0;
+    return values[1].getValue() - values[2].getValue();
   }
 
 }

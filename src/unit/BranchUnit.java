@@ -29,7 +29,5 @@ public class BranchUnit extends Unit {
       /* Branch instruction, so update program counter relatively */
       programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
     }
-
-
   }
 }
