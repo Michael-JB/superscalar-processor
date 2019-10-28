@@ -7,15 +7,17 @@ import instruction.ValueOperand;
 
 public class LoadStoreUnit extends Unit {
 
-  private final int memorySize = 100;
-  private final int[] memory = new int[memorySize];
+  private final int memoryCapacity;
+  private final int[] memory;
 
-  public LoadStoreUnit(Processor processor) {
+  public LoadStoreUnit(Processor processor, int memoryCapacity) {
     super(processor);
+    this.memoryCapacity = memoryCapacity;
+    this.memory = new int[memoryCapacity];
   }
 
   private boolean isInMemoryBounds(int address) {
-    return address >= 0 && address < memorySize;
+    return address >= 0 && address < memoryCapacity;
   }
 
   private int readFromMemory(int address) {

@@ -33,7 +33,7 @@ public class Main {
     System.out.println(outputSep + "PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, 8);
+      Processor processor = new Processor(parsedProgram, 8, 100);
       System.out.println(outputSep + "PROGRAM RUN START");
       processor.run();
       System.out.println(outputSep + "PROGRAM RUN END");

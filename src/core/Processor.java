@@ -31,11 +31,11 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private Stage currentStage = Stage.FETCH;
   private int cycleCount = 0, executedInstructionCount = 0;
 
-  public Processor(ParsedProgram parsedProgram, int registerFileCapacity) {
+  public Processor(ParsedProgram parsedProgram, int registerFileCapacity, int memoryCapacity) {
     this.parsedProgram = parsedProgram;
     this.registerFile = new RegisterFile(registerFileCapacity);
     this.arithmeticLogicUnit = new ArithmeticLogicUnit(this);
-    this.loadStoreUnit = new LoadStoreUnit(this);
+    this.loadStoreUnit = new LoadStoreUnit(this, memoryCapacity);
     this.branchUnit = new BranchUnit(this);
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
