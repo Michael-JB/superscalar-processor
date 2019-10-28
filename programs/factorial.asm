@@ -5,3 +5,4 @@ bgt r2 r0 3     # 3 | PC += {3 if r2 > r0, 0 otherwise}
 mul r1 r1 r2    # 4 | r1 <- r1 * r2
 addi r2 r2 1    # 5 | r2 <- r2 + 1
 jmp 3           # 6 | PC <- 3
+nop             # 7 |
