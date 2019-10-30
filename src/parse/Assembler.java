@@ -86,20 +86,16 @@ public class Assembler {
 
   private Optional<RegisterOperand> parseRegisterOperand(String token) {
     if (token.matches("r[0-9]+")) {
-      return Optional.of(new RegisterOperand(evaluateToken(token)));
+      return Optional.of(new RegisterOperand(Integer.parseInt(token.replaceAll("[^0-9]", ""))));
     }
     return Optional.empty();
   }
 
   private Optional<ValueOperand> parseValueOperand(String token) {
     if (token.matches("[0-9-]+")) {
-      return Optional.of(new ValueOperand(evaluateToken(token)));
+      return Optional.of(new ValueOperand(Integer.parseInt(token.replaceAll("[^0-9-]", ""))));
     }
     return Optional.empty();
-  }
-
-  private int evaluateToken(String token) {
-    return Integer.parseInt(token.replaceAll("[^0-9-]", ""));
   }
 
   private Optional<Instruction> parseLine(String line) {
