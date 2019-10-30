@@ -39,7 +39,7 @@ import instruction.ValueOperand;
 
 public class Assembler {
 
-  private final String charRegexWhitelist = "[^A-Za-z0-9# ]";
+  private final String charRegexWhitelist = "[^A-Za-z0-9# -]";
   private final String commentPrefix = "#";
 
   public ParsedProgram parseProgramFile(String programFile) {
@@ -92,14 +92,14 @@ public class Assembler {
   }
 
   private Optional<ValueOperand> parseValueOperand(String token) {
-    if (token.matches("[0-9]+")) {
+    if (token.matches("[0-9-]+")) {
       return Optional.of(new ValueOperand(evaluateToken(token)));
     }
     return Optional.empty();
   }
 
   private int evaluateToken(String token) {
-    return Integer.parseInt(token.replaceAll("[^0-9]", ""));
+    return Integer.parseInt(token.replaceAll("[^0-9-]", ""));
   }
 
   private Optional<Instruction> parseLine(String line) {
