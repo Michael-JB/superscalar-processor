@@ -72,7 +72,7 @@ public abstract class Unit {
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
-        System.out.println("Executing: " + toExecute.toString());
+        System.out.println("Execution start: " + toExecute.toString() + " " + Arrays.toString(getValuesFromRegisters(toExecute)));
         process(toExecute);
       }
 
