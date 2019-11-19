@@ -16,6 +16,8 @@ import unit.LoadStoreUnit;
 
 public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
 
+  private final boolean PIPELINE = true;
+
   private final ParsedProgram parsedProgram;
 
   private final RegisterFile registerFile;
@@ -110,53 +112,75 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     branchUnit.tick();
   }
 
-  public void tick() {
-    tickUnits();
-
-    switch(currentStage) {
-      case FETCH:
-        if (!hasReachedProgramEnd()) {
-          pushToDecodeBuffer(parsedProgram.getInstructions().get(getProgramCounter().getValue()));
-          getProgramCounter().setValue(getProgramCounter().getValue() + 1);
-        }
-        currentStage = Stage.DECODE;
-        break;
-      case DECODE:
-        if (!decodeBuffer.isEmpty()) {
-          pushToExecuteBuffer(decodeInstruction(decodeBuffer.poll()));
-        }
-        currentStage = Stage.EXECUTE;
-        break;
-      case EXECUTE:
-        if (!executeBuffer.isEmpty()) {
-          Instruction toExecute = executeBuffer.poll();
-          switch(toExecute.getOpcode().getCategory()) {
-            case ARITHMETIC:
-              arithmeticLogicUnit.bufferInstruction(toExecute);
-              break;
-            case MEMORY:
-              loadStoreUnit.bufferInstruction(toExecute);
-              break;
-            case CONTROL:
-              branchUnit.bufferInstruction(toExecute);
-              break;
-          }
-          executedInstructionCount++;
-        }
-        currentStage = Stage.WRITEBACK;
-        break;
-      case WRITEBACK:
-        if (!writebackBuffer.isEmpty()) {
-          Instruction evaluatedInstruction = writebackBuffer.poll();
-          evaluatedInstruction.getWritebackResult().ifPresent(res -> {
-            Optional<Integer> destinationRegister = getDestinationRegister(evaluatedInstruction);
-            destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
-          });
-        }
-        currentStage = Stage.FETCH;
-        break;
+  private void fetch() {
+    if (!hasReachedProgramEnd()) {
+      pushToDecodeBuffer(parsedProgram.getInstructions().get(getProgramCounter().getValue()));
+      getProgramCounter().setValue(getProgramCounter().getValue() + 1);
     }
-    cycleCount++;
   }
 
+  private void decode() {
+    if (!decodeBuffer.isEmpty()) {
+      pushToExecuteBuffer(decodeInstruction(decodeBuffer.poll()));
+    }
+  }
+
+  private void execute() {
+    if (!executeBuffer.isEmpty()) {
+      Instruction toExecute = executeBuffer.poll();
+      switch(toExecute.getOpcode().getCategory()) {
+        case ARITHMETIC:
+          arithmeticLogicUnit.bufferInstruction(toExecute);
+          break;
+        case MEMORY:
+          loadStoreUnit.bufferInstruction(toExecute);
+          break;
+        case CONTROL:
+          branchUnit.bufferInstruction(toExecute);
+          break;
+      }
+      executedInstructionCount++;
+    }
+    tickUnits();
+  }
+
+  private void writeback() {
+    if (!writebackBuffer.isEmpty()) {
+      Instruction evaluatedInstruction = writebackBuffer.poll();
+      evaluatedInstruction.getWritebackResult().ifPresent(res -> {
+        Optional<Integer> destinationRegister = getDestinationRegister(evaluatedInstruction);
+        destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
+      });
+    }
+  }
+
+  public void tick() {
+    if (PIPELINE) {
+      writeback();
+      execute();
+      decode();
+      fetch();
+    } else {
+      switch(currentStage) {
+        case FETCH:
+          fetch();
+          currentStage = Stage.DECODE;
+          break;
+        case DECODE:
+          decode();
+          currentStage = Stage.EXECUTE;
+          break;
+        case EXECUTE:
+          execute();
+          currentStage = Stage.WRITEBACK;
+          break;
+        case WRITEBACK:
+          writeback();
+          currentStage = Stage.FETCH;
+          break;
+      }
+    }
+
+    cycleCount++;
+  }
 }
