@@ -1,6 +1,7 @@
 package core;
 
 import java.io.File;
+import java.util.Scanner;
 
 import parse.Assembler;
 import parse.ParsedProgram;
@@ -12,6 +13,7 @@ public class Main {
   public static void main(String[] args) {
 
     String programFileName = defaultProgramFileName;
+    boolean interactiveMode = false;
 
     if (args.length > 0) {
       File programFile = new File(args[0]);
@@ -19,6 +21,9 @@ public class Main {
         programFileName = args[0];
       } else {
         System.out.println("Invalid program file specified. Using default program file: " + defaultProgramFileName);
+      }
+      if (args.length > 1) {
+        interactiveMode = args[1].equals("true");
       }
     } else {
       System.out.println("No program file specified. Using default program file: " + defaultProgramFileName);
@@ -34,21 +39,38 @@ public class Main {
 
     if (!parsedProgram.hasError()) {
       Processor processor = new Processor(parsedProgram, 16, 100);
-      System.out.println(outputSep + "PROGRAM RUN START");
-      processor.run();
-      System.out.println(outputSep + "PROGRAM RUN END");
+
+      if (interactiveMode) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println(outputSep + "PROGRAM STEP START");
+        while (processor.step()) {
+          System.out.print(processor.getRegisterFile().toString());
+          System.out.println(outputSep + "PROGRAM STEP");
+          scanner.nextLine();
+        }
+        scanner.close();
+      } else {
+        System.out.println(outputSep + "PROGRAM RUN START");
+        processor.run();
+        System.out.println(outputSep + "PROGRAM RUN END");
+      }
+
       System.out.println(outputSep + "REGISTER DUMP START");
       System.out.print(processor.getRegisterFile().toString());
       System.out.println(outputSep + "REGISTER DUMP END");
+
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();
       int cycles = processor.getCycleCount();
-      float cyclesPerInstruction = cycles / executedInstructionCount;
+      float cyclesPerInstruction = (float) cycles / (float) executedInstructionCount;
+      float instructionsPerCycle = (float) executedInstructionCount / (float) cycles;
+
       System.out.println(outputSep + "ANALYTICS START");
       System.out.println("Program instructions: " + instructionCount);
       System.out.println("Executed instructions: " + executedInstructionCount);
       System.out.println("Cycles taken: " + cycles);
       System.out.println("Cycles per instruction: " + cyclesPerInstruction);
+      System.out.println("Instructions per cycle: " + instructionsPerCycle);
       System.out.println(outputSep + "ANALYTICS END");
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");

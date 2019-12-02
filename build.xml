@@ -25,6 +25,7 @@
   <target name="run" depends="build-jar">
     <java jar="${ant.project.name}.jar" fork="true">
       <arg value="${pf}" if:set="pf"/>
+      <arg value="${i}" if:set="i"/>
     </java>
   </target>
 

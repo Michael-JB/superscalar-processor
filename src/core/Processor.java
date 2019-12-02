@@ -1,6 +1,8 @@
 package core;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 
@@ -13,18 +15,25 @@ import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
 import unit.BranchUnit;
 import unit.LoadStoreUnit;
+import unit.UnitLoadComparator;
 
 public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
 
   private final boolean PIPELINE = true;
+  private final int ALU_COUNT = 2; // Arithmetic Logic units
+  private final int BU_COUNT = 1; // Branch units
+  private final int LSU_Count = 2; // Load store units
 
   private final ParsedProgram parsedProgram;
 
   private final RegisterFile registerFile;
   private final Register programCounterRegister;
-  private final ArithmeticLogicUnit arithmeticLogicUnit;
-  private final LoadStoreUnit loadStoreUnit;
-  private final BranchUnit branchUnit;
+
+  private final List<BranchUnit> branchUnits = new ArrayList<BranchUnit>();
+  private final List<ArithmeticLogicUnit> arithmeticLogicUnits = new ArrayList<ArithmeticLogicUnit>();
+  private final List<LoadStoreUnit> loadStoreUnits = new ArrayList<LoadStoreUnit>();
+
+  private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
 
   private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
   private final Queue<Instruction> executeBuffer = new LinkedList<Instruction>();
@@ -36,9 +45,15 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity, int memoryCapacity) {
     this.parsedProgram = parsedProgram;
     this.registerFile = new RegisterFile(registerFileCapacity);
-    this.arithmeticLogicUnit = new ArithmeticLogicUnit(this);
-    this.loadStoreUnit = new LoadStoreUnit(this, memoryCapacity);
-    this.branchUnit = new BranchUnit(this);
+    for (int i = 0; i < ALU_COUNT; i++) {
+      arithmeticLogicUnits.add(new ArithmeticLogicUnit(this));
+    }
+    for (int i = 0; i < BU_COUNT; i++) {
+      branchUnits.add(new BranchUnit(this));
+    }
+    for (int i = 0; i < LSU_Count; i++) {
+      loadStoreUnits.add(new LoadStoreUnit(this, memoryCapacity));
+    }
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
   }
@@ -53,10 +68,19 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     }
   }
 
+  public boolean step() {
+    if (isProcessing()) {
+      tick();
+      return true;
+    }
+    return false;
+  }
+
   private boolean isProcessing() {
     return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !executeBuffer.isEmpty()
-      || !writebackBuffer.isEmpty() || arithmeticLogicUnit.hasBufferedInstruction()
-      || loadStoreUnit.hasBufferedInstruction() || branchUnit.hasBufferedInstruction();
+      || !writebackBuffer.isEmpty() || arithmeticLogicUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
+      || loadStoreUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
+      || branchUnits.stream().anyMatch(u -> u.hasBufferedInstruction());
   }
 
   public void pushToDecodeBuffer(Instruction instruction) {
@@ -107,9 +131,9 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private void tickUnits() {
-    arithmeticLogicUnit.tick();
-    loadStoreUnit.tick();
-    branchUnit.tick();
+    arithmeticLogicUnits.forEach(u -> u.tick());
+    loadStoreUnits.forEach(u -> u.tick());
+    branchUnits.forEach(u -> u.tick());
   }
 
   private void fetch() {
@@ -130,13 +154,13 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       Instruction toExecute = executeBuffer.poll();
       switch(toExecute.getOpcode().getCategory()) {
         case ARITHMETIC:
-          arithmeticLogicUnit.bufferInstruction(toExecute);
+          arithmeticLogicUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
           break;
         case MEMORY:
-          loadStoreUnit.bufferInstruction(toExecute);
+          loadStoreUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
           break;
         case CONTROL:
-          branchUnit.bufferInstruction(toExecute);
+          branchUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
           break;
       }
       executedInstructionCount++;

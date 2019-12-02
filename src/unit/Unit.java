@@ -28,6 +28,10 @@ public abstract class Unit {
     return processor;
   }
 
+  public int bufferedInstructionCount() {
+    return instructionBuffer.size();
+  }
+
   public boolean hasBufferedInstruction() {
     return !instructionBuffer.isEmpty();
   }

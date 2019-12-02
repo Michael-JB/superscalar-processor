@@ -4,9 +4,11 @@ public class Register {
 
   private final int id;
   private int value = -1;
+  private RegisterFlag flag;
 
   public Register(int id) {
     this.id = id;
+    this.flag = RegisterFlag.VALID;
   }
 
   public int getId() {
@@ -19,6 +21,14 @@ public class Register {
 
   public void setValue(int value) {
     this.value = value;
+  }
+
+  public RegisterFlag getFlag() {
+    return flag;
+  }
+
+  public void setFlag(RegisterFlag flag) {
+    this.flag = flag;
   }
 
   @Override
