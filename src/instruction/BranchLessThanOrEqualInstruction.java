@@ -7,8 +7,8 @@ public class BranchLessThanOrEqualInstruction extends Instruction {
   }
 
   @Override
-  public int eval(ValueOperand... values) {
-    return values[0].getValue() <= values[1].getValue() ? values[2].getValue() : 0;
+  public int eval() {
+    return operands[0].getExecutionValue().get() <= operands[1].getExecutionValue().get() ? operands[2].getExecutionValue().get() : 0;
   }
 
 }

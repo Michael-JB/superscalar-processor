@@ -7,8 +7,8 @@ public class JumpInstruction extends Instruction {
   }
 
   @Override
-  public int eval(ValueOperand... values) {
-    return values[0].getValue();
+  public int eval() {
+    return operands[0].getExecutionValue().get();
   }
 
 }

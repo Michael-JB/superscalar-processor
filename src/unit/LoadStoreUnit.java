@@ -39,18 +39,23 @@ public class LoadStoreUnit extends Unit {
   @Override
   public void process(Instruction instruction) {
     /* Retrieve operand values from registers */
-    ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     Opcode opcode = instruction.getOpcode();
 
     /* Execute instruction */
-    int targetAddress = instruction.evaluate(inputValues);
+    int targetAddress = instruction.evaluate();
 
     if (opcode == Opcode.LA || opcode == Opcode.LAI) {
       /* Load  instructions */
       instruction.setWritebackResult(readFromMemory(targetAddress));
     } else {
       /* Store instructions */
-      storeToMemory(targetAddress, inputValues[0].getValue());
+      storeToMemory(targetAddress, instruction.getOperands()[0].getExecutionValue().get());
     }
+  }
+
+  @Override
+  public String toString() {
+    return "Load Store Unit";
   }
 }

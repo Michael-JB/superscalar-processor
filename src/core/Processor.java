@@ -9,8 +9,11 @@ import java.util.Queue;
 import instruction.Instruction;
 import instruction.Operand;
 import instruction.RegisterOperand;
+import instruction.Tag;
+import instruction.TagGenerator;
 import memory.Register;
 import memory.RegisterFile;
+import memory.RegisterFlag;
 import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
 import unit.BranchUnit;
@@ -20,9 +23,9 @@ import unit.UnitLoadComparator;
 public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
 
   private final boolean PIPELINE = true;
-  private final int ALU_COUNT = 2; // Arithmetic Logic units
+  private final int ALU_COUNT = 1; // Arithmetic Logic units
   private final int BU_COUNT = 1; // Branch units
-  private final int LSU_Count = 2; // Load store units
+  private final int LSU_Count = 1; // Load store units
 
   private final ParsedProgram parsedProgram;
 
@@ -36,8 +39,9 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
 
   private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
-  private final Queue<Instruction> executeBuffer = new LinkedList<Instruction>();
   private final Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
+
+  private final TagGenerator tagGenerator = new TagGenerator();
 
   private Stage currentStage = Stage.FETCH;
   private int cycleCount = 0, executedInstructionCount = 0;
@@ -77,18 +81,17 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private boolean isProcessing() {
-    return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !executeBuffer.isEmpty()
-      || !writebackBuffer.isEmpty() || arithmeticLogicUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
+    return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !writebackBuffer.isEmpty()
+      || arithmeticLogicUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
+      || loadStoreUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
+      || branchUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
+      || arithmeticLogicUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
       || loadStoreUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
       || branchUnits.stream().anyMatch(u -> u.hasBufferedInstruction());
   }
 
   public void pushToDecodeBuffer(Instruction instruction) {
     decodeBuffer.offer(instruction);
-  }
-
-  public void pushToExecuteBuffer(Instruction instruction) {
-    executeBuffer.offer(instruction);
   }
 
   public void pushToWritebackBuffer(Instruction instruction) {
@@ -111,21 +114,6 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     return registerFile;
   }
 
-  private Instruction decodeInstruction(Instruction instruction) {
-    return instruction;
-  }
-
-  private Optional<Integer> getDestinationRegister(Instruction instruction) {
-    Operand[] instructionOperands = instruction.getOperands();
-    if (instructionOperands.length > 0) {
-      Operand firstOperand = instructionOperands[0];
-      if (firstOperand instanceof RegisterOperand) {
-        return Optional.of(firstOperand.getValue());
-      }
-    }
-    return Optional.empty();
-  }
-
   private boolean hasReachedProgramEnd() {
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
@@ -137,43 +125,75 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private void fetch() {
+    System.out.println("\nFetch");
     if (!hasReachedProgramEnd()) {
       pushToDecodeBuffer(parsedProgram.getInstructions().get(getProgramCounter().getValue()));
       getProgramCounter().setValue(getProgramCounter().getValue() + 1);
     }
   }
 
+  private void dispatchReservationStations() {
+    // System.out.println("Dispatching all reservation stations");
+    arithmeticLogicUnits.forEach(u -> u.getReservationStation().dispatch());
+    loadStoreUnits.forEach(u -> u.getReservationStation().dispatch());
+    branchUnits.forEach(u -> u.getReservationStation().dispatch());
+  }
+
+  private void broadcastToReservationStations(Tag tag, int result) {
+    // System.out.println("Broadcasting to all reservation stations");
+    arithmeticLogicUnits.forEach(u -> u.getReservationStation().receive(tag, result));
+    loadStoreUnits.forEach(u -> u.getReservationStation().receive(tag, result));
+    branchUnits.forEach(u -> u.getReservationStation().receive(tag, result));
+  }
+
   private void decode() {
+    System.out.println("\nDecode");
+    dispatchReservationStations();
     if (!decodeBuffer.isEmpty()) {
-      pushToExecuteBuffer(decodeInstruction(decodeBuffer.poll()));
+      Instruction toIssue = decodeBuffer.peek();
+      toIssue.setTag(tagGenerator.generateTag());
+      boolean successfulIssue = false;
+      switch(toIssue.getOpcode().getCategory()) {
+        case ARITHMETIC:
+          successfulIssue = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          break;
+        case MEMORY:
+          successfulIssue = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          break;
+        case CONTROL:
+          successfulIssue = branchUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          break;
+      }
+      if (successfulIssue) {
+        decodeBuffer.poll();
+      }
     }
   }
 
+  public void incrementExecutedInstructionCount() {
+    executedInstructionCount++;
+  }
+
   private void execute() {
-    if (!executeBuffer.isEmpty()) {
-      Instruction toExecute = executeBuffer.poll();
-      switch(toExecute.getOpcode().getCategory()) {
-        case ARITHMETIC:
-          arithmeticLogicUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
-          break;
-        case MEMORY:
-          loadStoreUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
-          break;
-        case CONTROL:
-          branchUnits.stream().min(unitLoadComparator).get().bufferInstruction(toExecute);
-          break;
-      }
-      executedInstructionCount++;
-    }
+    System.out.println("\nExecute");
     tickUnits();
   }
 
   private void writeback() {
+    System.out.println("\nWriteback");
     if (!writebackBuffer.isEmpty()) {
       Instruction evaluatedInstruction = writebackBuffer.poll();
       evaluatedInstruction.getWritebackResult().ifPresent(res -> {
-        Optional<Integer> destinationRegister = getDestinationRegister(evaluatedInstruction);
-        destinationRegister.ifPresent(reg -> registerFile.getRegister(reg).setValue(res));
+        Optional<RegisterOperand> destinationRegister = evaluatedInstruction.getDestinationRegister();
+        destinationRegister.ifPresent(reg -> {
+          Register register = registerFile.getRegister(reg.getValue());
+          if (register.getReservingTag().isPresent() && register.getReservingTag().get().getValue() == evaluatedInstruction.getTag().getValue()) {
+            register.setFlag(RegisterFlag.VALID);
+            register.setValue(res);
+          }
+          broadcastToReservationStations(evaluatedInstruction.getTag(), res);
+          System.out.println("RS Broadcast: tag=" + evaluatedInstruction.getTag().getValue() + ", res=" + res);
+        });
       });
     }
   }

@@ -8,16 +8,19 @@ import core.Processor;
 import instruction.Instruction;
 import instruction.RegisterOperand;
 import instruction.ValueOperand;
+import memory.ReservationStation;
 
 public abstract class Unit {
 
   protected final Processor processor;
+  protected final ReservationStation reservationStation;
   protected int delayCounter = 0;
 
   protected Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
 
   public Unit(Processor processor) {
     this.processor = processor;
+    this.reservationStation = new ReservationStation(processor, this);
   }
 
   public void bufferInstruction(Instruction instruction) {
@@ -28,8 +31,8 @@ public abstract class Unit {
     return processor;
   }
 
-  public int bufferedInstructionCount() {
-    return instructionBuffer.size();
+  public ReservationStation getReservationStation() {
+    return reservationStation;
   }
 
   public boolean hasBufferedInstruction() {
@@ -56,17 +59,8 @@ public abstract class Unit {
     Instruction completed = instructionBuffer.poll();
     processor.pushToWritebackBuffer(completed);
     resetDelayCounter();
+    processor.incrementExecutedInstructionCount();
     return completed;
-  }
-
-  protected ValueOperand[] getValuesFromRegisters(Instruction instruction) {
-    return Arrays.stream(instruction.getOperands()).map(o -> {
-      if (o instanceof RegisterOperand) {
-        return new ValueOperand(processor.getRegisterFile().getRegister(o.getValue()).getValue());
-      } else {
-        return o;
-      }
-    }).toArray(ValueOperand[]::new);
   }
 
   public void tick() {
@@ -76,7 +70,7 @@ public abstract class Unit {
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
-        System.out.println("Execution start: " + toExecute.toString() + " " + Arrays.toString(getValuesFromRegisters(toExecute)));
+        System.out.println("Execution start: " + toExecute.toString());
         process(toExecute);
       }
 

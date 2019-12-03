@@ -7,10 +7,10 @@ public class CompareInstruction extends Instruction {
   }
 
   @Override
-  public int eval(ValueOperand... values) {
-    if (values[1].getValue() < values[2].getValue()) {
+  public int eval() {
+    if (operands[1].getExecutionValue().get() < operands[2].getExecutionValue().get()) {
       return -1;
-    } else if (values[1].getValue() > values[2].getValue()) {
+    } else if (operands[1].getExecutionValue().get() > operands[2].getExecutionValue().get()) {
       return 1;
     } else {
       return 0;

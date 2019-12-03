@@ -7,8 +7,8 @@ public class SubtractImmediateInstruction extends Instruction {
   }
 
   @Override
-  public int eval(ValueOperand... values) {
-    return values[1].getValue() - values[2].getValue();
+  public int eval() {
+    return operands[1].getExecutionValue().get() - operands[2].getExecutionValue().get();
   }
 
 }

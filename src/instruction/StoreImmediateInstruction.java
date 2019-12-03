@@ -7,8 +7,8 @@ public class StoreImmediateInstruction extends Instruction {
   }
 
   @Override
-  public int eval(ValueOperand... values) {
-    return values[1].getValue();
+  public int eval() {
+    return operands[1].getExecutionValue().get();
   }
 
 }

@@ -15,11 +15,11 @@ public class BranchUnit extends Unit {
   @Override
   public void process(Instruction instruction) {
     /* Retrieve operand values from registers */
-    ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     Opcode opcode = instruction.getOpcode();
 
     /* Execute instruction */
-    int executionResult = instruction.evaluate(inputValues);
+    int executionResult = instruction.evaluate();
 
     Register programCounterRegister = processor.getProgramCounter();
 
@@ -32,5 +32,10 @@ public class BranchUnit extends Unit {
       /* Branch instruction, so update program counter relatively */
       programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "Branch Unit";
   }
 }

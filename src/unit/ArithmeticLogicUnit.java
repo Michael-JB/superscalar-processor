@@ -13,10 +13,15 @@ public class ArithmeticLogicUnit extends Unit {
   @Override
   public void process(Instruction instruction) {
     /* Retrieve operand values from registers */
-    ValueOperand[] inputValues = getValuesFromRegisters(instruction);
+    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     /* Execute instruction */
-    int executionResult = instruction.evaluate(inputValues);
+    int executionResult = instruction.evaluate();
     /* Update instruction result */
     instruction.setWritebackResult(executionResult);
+  }
+
+  @Override
+  public String toString() {
+    return "Arithmetic Logic Unit";
   }
 }
