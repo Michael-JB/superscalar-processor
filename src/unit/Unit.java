@@ -1,13 +1,9 @@
 package unit;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Optional;
 
 import core.Processor;
 import instruction.Instruction;
-import instruction.RegisterOperand;
-import instruction.ValueOperand;
 import memory.ReservationStation;
 
 public abstract class Unit {
@@ -16,15 +12,15 @@ public abstract class Unit {
   protected final ReservationStation reservationStation;
   protected int delayCounter = 0;
 
-  protected Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
+  protected Optional<Instruction> inputInstruction = Optional.empty();
 
   public Unit(Processor processor) {
     this.processor = processor;
     this.reservationStation = new ReservationStation(processor, this);
   }
 
-  public void bufferInstruction(Instruction instruction) {
-    instructionBuffer.offer(instruction);
+  public void inputInstruction(Instruction instruction) {
+    inputInstruction = Optional.of(instruction);
   }
 
   protected Processor getProcessor() {
@@ -35,12 +31,8 @@ public abstract class Unit {
     return reservationStation;
   }
 
-  public boolean hasBufferedInstruction() {
-    return !instructionBuffer.isEmpty();
-  }
-
-  private Instruction getCurrentInstruction() {
-    return instructionBuffer.peek();
+  public boolean hasInputInstruction() {
+    return inputInstruction.isPresent();
   }
 
   private void incrementDelayCounter() {
@@ -55,23 +47,26 @@ public abstract class Unit {
     delayCounter = 0;
   }
 
-  private Instruction completeCurrentInstruction() {
-    Instruction completed = instructionBuffer.poll();
-    processor.pushToWritebackBuffer(completed);
-    resetDelayCounter();
-    processor.incrementExecutedInstructionCount();
-    return completed;
+  private void completeCurrentInstruction() {
+    if (hasInputInstruction()) {
+      Instruction completed = inputInstruction.get();
+      inputInstruction = Optional.empty();
+      processor.pushToWritebackBuffer(completed);
+      resetDelayCounter();
+      processor.incrementExecutedInstructionCount();
+    } else {
+      throw new IllegalArgumentException("Cannot complete non-existent instruction");
+    }
   }
 
   public void tick() {
-    if (hasBufferedInstruction()) {
+    if (hasInputInstruction()) {
       /* Get instruction from queue */
-      Instruction toExecute = getCurrentInstruction();
+      Instruction toExecute = inputInstruction.get();
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
         System.out.println("Execution start: " + toExecute.toString());
-        process(toExecute);
       }
 
       /* Increment delay counter on each tick, until latency reached */
@@ -79,6 +74,7 @@ public abstract class Unit {
 
       if (getDelayCounter() >= toExecute.getOpcode().getLatency()) {
         /* Instruction has now been completed */
+        process(toExecute);
         completeCurrentInstruction();
       }
     }

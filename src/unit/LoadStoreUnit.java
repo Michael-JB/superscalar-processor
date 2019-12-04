@@ -3,7 +3,6 @@ package unit;
 import core.Processor;
 import instruction.Instruction;
 import instruction.Opcode;
-import instruction.ValueOperand;
 
 public class LoadStoreUnit extends Unit {
 
@@ -38,8 +37,6 @@ public class LoadStoreUnit extends Unit {
 
   @Override
   public void process(Instruction instruction) {
-    /* Retrieve operand values from registers */
-    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     Opcode opcode = instruction.getOpcode();
 
     /* Execute instruction */

@@ -2,7 +2,6 @@ package unit;
 
 import core.Processor;
 import instruction.Instruction;
-import instruction.ValueOperand;
 
 public class ArithmeticLogicUnit extends Unit {
 
@@ -12,8 +11,6 @@ public class ArithmeticLogicUnit extends Unit {
 
   @Override
   public void process(Instruction instruction) {
-    /* Retrieve operand values from registers */
-    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     /* Execute instruction */
     int executionResult = instruction.evaluate();
     /* Update instruction result */

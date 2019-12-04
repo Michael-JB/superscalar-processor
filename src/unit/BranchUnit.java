@@ -3,7 +3,6 @@ package unit;
 import core.Processor;
 import instruction.Instruction;
 import instruction.Opcode;
-import instruction.ValueOperand;
 import memory.Register;
 
 public class BranchUnit extends Unit {
@@ -14,8 +13,6 @@ public class BranchUnit extends Unit {
 
   @Override
   public void process(Instruction instruction) {
-    /* Retrieve operand values from registers */
-    // ValueOperand[] inputValues = getValuesFromRegisters(instruction);
     Opcode opcode = instruction.getOpcode();
 
     /* Execute instruction */

@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Queue;
 
 import instruction.Instruction;
-import instruction.Operand;
 import instruction.RegisterOperand;
 import instruction.Tag;
 import instruction.TagGenerator;
@@ -85,9 +84,9 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       || arithmeticLogicUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
       || loadStoreUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
       || branchUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
-      || arithmeticLogicUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
-      || loadStoreUnits.stream().anyMatch(u -> u.hasBufferedInstruction())
-      || branchUnits.stream().anyMatch(u -> u.hasBufferedInstruction());
+      || arithmeticLogicUnits.stream().anyMatch(u -> u.hasInputInstruction())
+      || loadStoreUnits.stream().anyMatch(u -> u.hasInputInstruction())
+      || branchUnits.stream().anyMatch(u -> u.hasInputInstruction());
   }
 
   public void pushToDecodeBuffer(Instruction instruction) {

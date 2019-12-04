@@ -74,9 +74,9 @@ public class ReservationStation {
   public void dispatch() {
     if (!instructionBuffer.isEmpty()) {
       Instruction toDispatch = instructionBuffer.peek();
-      if (toDispatch.isReady()) {
+      if (toDispatch.isReady() && !unit.hasInputInstruction()) {
         System.out.println("Dispatching (" + toDispatch.toString() +  ") from RS for " + unit.toString() + ".");
-        unit.bufferInstruction(instructionBuffer.poll());
+        unit.inputInstruction(instructionBuffer.poll());
       }
     }
   }
