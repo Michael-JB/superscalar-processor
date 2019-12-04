@@ -13,6 +13,9 @@ import instruction.TagGenerator;
 import memory.Register;
 import memory.RegisterFile;
 import memory.RegisterFlag;
+import memory.ReorderBuffer;
+import memory.ReorderBufferEntry;
+import memory.ReservationStation;
 import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
 import unit.BranchUnit;
@@ -21,7 +24,6 @@ import unit.UnitLoadComparator;
 
 public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
 
-  private final boolean PIPELINE = true;
   private final int ALU_COUNT = 1; // Arithmetic Logic units
   private final int BU_COUNT = 1; // Branch units
   private final int LSU_Count = 1; // Load store units
@@ -34,7 +36,6 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final List<BranchUnit> branchUnits = new ArrayList<BranchUnit>();
   private final List<ArithmeticLogicUnit> arithmeticLogicUnits = new ArrayList<ArithmeticLogicUnit>();
   private final List<LoadStoreUnit> loadStoreUnits = new ArrayList<LoadStoreUnit>();
-
   private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
 
   private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
@@ -42,7 +43,8 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
   private final TagGenerator tagGenerator = new TagGenerator();
 
-  private Stage currentStage = Stage.FETCH;
+  private final ReorderBuffer reorderBuffer = new ReorderBuffer(this);
+
   private int cycleCount = 0, executedInstructionCount = 0;
 
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity, int memoryCapacity) {
@@ -59,10 +61,6 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     }
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
-  }
-
-  private enum Stage {
-    FETCH, DECODE, EXECUTE, WRITEBACK;
   }
 
   public void run() {
@@ -138,7 +136,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     branchUnits.forEach(u -> u.getReservationStation().dispatch());
   }
 
-  private void broadcastToReservationStations(Tag tag, int result) {
+  public void broadcastToReservationStations(Tag tag, int result) {
     arithmeticLogicUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     loadStoreUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     branchUnits.forEach(u -> u.getReservationStation().receive(tag, result));
@@ -148,30 +146,39 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     dispatchReservationStations();
     if (!decodeBuffer.isEmpty()) {
       Instruction toIssue = decodeBuffer.peek();
-      if (toIssue.getTag() == null)
-        toIssue.setTag(tagGenerator.generateTag());
-      boolean successfulIssue = false;
+      ReservationStation toIssueTo = null;
+
       switch(toIssue.getOpcode().getCategory()) {
         case ARITHMETIC:
-          successfulIssue = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          toIssueTo = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation();
           break;
         case MEMORY:
-          successfulIssue = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          toIssueTo = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation();
           break;
         case CONTROL:
-          successfulIssue = branchUnits.stream().min(unitLoadComparator).get().getReservationStation().issue(toIssue);
+          toIssueTo = branchUnits.stream().min(unitLoadComparator).get().getReservationStation();
           break;
       }
-      if (successfulIssue) {
-        decodeBuffer.poll();
-        System.out.println("ISSUED INSTRUCTION: " + toIssue.toString());
-      } else {
-        System.out.println("ISSUE BLOCKED: " + toIssue.toString());
+
+      if (toIssueTo != null) {
+        if (!toIssueTo.isFull() && !reorderBuffer.isFull()) {
+          decodeBuffer.poll();
+          toIssue.setTag(tagGenerator.generateTag());
+          toIssueTo.issue(toIssue);
+          reorderBuffer.pushToTail(new ReorderBufferEntry(toIssue));
+          System.out.println("ISSUED INSTRUCTION: " + toIssue.toString());
+        } else {
+          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
+        }
       }
     }
   }
 
   public void printStatus() {
+    System.out.println("Re-order Buffer:");
+    System.out.println(reorderBuffer.getStatus());
+    System.out.println();
+
     System.out.println("Reservation Stations:");
     for (int i = 0; i < arithmeticLogicUnits.size(); i++)
       System.out.println("ALU RS " + i + " | " + arithmeticLogicUnits.get(i).getReservationStation().getStatus());
@@ -222,31 +229,10 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   public void tick() {
-    if (PIPELINE) {
-      writeback();
-      execute();
-      decode();
-      fetch();
-    } else {
-      switch(currentStage) {
-        case FETCH:
-          fetch();
-          currentStage = Stage.DECODE;
-          break;
-        case DECODE:
-          decode();
-          currentStage = Stage.EXECUTE;
-          break;
-        case EXECUTE:
-          execute();
-          currentStage = Stage.WRITEBACK;
-          break;
-        case WRITEBACK:
-          writeback();
-          currentStage = Stage.FETCH;
-          break;
-      }
-    }
+    writeback();
+    execute();
+    decode();
+    fetch();
 
     cycleCount++;
   }
