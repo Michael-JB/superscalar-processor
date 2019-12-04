@@ -51,7 +51,7 @@ public class ReservationStation {
 
   public boolean issue(Instruction instruction) {
     if (instructionBuffer.size() < RESERVATION_STATION_SIZE) {
-      System.out.println("Issuing (" + instruction.toString() +  ") to RS for " + unit.toString() + ".");
+      // System.out.println("Issuing (" + instruction.toString() +  ") to RS for " + unit.toString() + ".");
 
       instruction.getSourceOperands().forEach(o -> o.tryRetrieveValue(processor.getRegisterFile()));
 
@@ -64,7 +64,7 @@ public class ReservationStation {
       });
 
       instructionBuffer.offer(instruction);
-      System.out.println("RS content: " + instructionBuffer.toString());
+      // System.out.println("RS content: " + instructionBuffer.toString());
       // TODO
       return true;
     }
@@ -75,10 +75,14 @@ public class ReservationStation {
     if (!instructionBuffer.isEmpty()) {
       Instruction toDispatch = instructionBuffer.peek();
       if (toDispatch.isReady() && !unit.hasInputInstruction()) {
-        System.out.println("Dispatching (" + toDispatch.toString() +  ") from RS for " + unit.toString() + ".");
+        // System.out.println("Dispatching (" + toDispatch.toString() +  ") from RS for " + unit.toString() + ".");
         unit.inputInstruction(instructionBuffer.poll());
       }
     }
+  }
+
+  public String getStatus() {
+    return "(" + bufferedInstructionCount() + "/" + RESERVATION_STATION_SIZE + ") | " + instructionBuffer.toString();
   }
 
 }

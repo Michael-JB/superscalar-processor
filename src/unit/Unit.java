@@ -51,6 +51,7 @@ public abstract class Unit {
     if (hasInputInstruction()) {
       Instruction completed = inputInstruction.get();
       inputInstruction = Optional.empty();
+      System.out.println("EXECUTION COMPLETE: " + completed.toString());
       processor.pushToWritebackBuffer(completed);
       resetDelayCounter();
       processor.incrementExecutedInstructionCount();
@@ -66,7 +67,7 @@ public abstract class Unit {
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
-        System.out.println("Execution start: " + toExecute.toString());
+        System.out.println("EXECUTION START: " + toExecute.toString());
       }
 
       /* Increment delay counter on each tick, until latency reached */
@@ -80,6 +81,9 @@ public abstract class Unit {
     }
   }
 
-  public abstract void process(Instruction instruction);
+  public String getStatus() {
+    return inputInstruction.isPresent() ? inputInstruction.get() + " (" + delayCounter + "/" + inputInstruction.get().getOpcode().getLatency() + ")" : "IDLE";
+  }
 
+  public abstract void process(Instruction instruction);
 }

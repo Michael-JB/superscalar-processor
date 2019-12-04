@@ -96,7 +96,7 @@ public abstract class Instruction {
   public String toString() {
     return opcode.getInstructionPrefix() + " " + Arrays.stream(operands)
       .map(Operand::toString)
-      .collect(Collectors.joining(" "));
+      .collect(Collectors.joining(" ")) + (tag != null ? " (" + tag + ")" : "");
   }
 
 }

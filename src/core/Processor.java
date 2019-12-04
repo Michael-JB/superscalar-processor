@@ -124,33 +124,32 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private void fetch() {
-    System.out.println("\nFetch");
     if (!hasReachedProgramEnd()) {
-      pushToDecodeBuffer(parsedProgram.getInstructions().get(getProgramCounter().getValue()));
+      Instruction fetchedInstruction = parsedProgram.getInstructions().get(getProgramCounter().getValue());
+      pushToDecodeBuffer(fetchedInstruction);
       getProgramCounter().setValue(getProgramCounter().getValue() + 1);
+      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
     }
   }
 
   private void dispatchReservationStations() {
-    // System.out.println("Dispatching all reservation stations");
     arithmeticLogicUnits.forEach(u -> u.getReservationStation().dispatch());
     loadStoreUnits.forEach(u -> u.getReservationStation().dispatch());
     branchUnits.forEach(u -> u.getReservationStation().dispatch());
   }
 
   private void broadcastToReservationStations(Tag tag, int result) {
-    // System.out.println("Broadcasting to all reservation stations");
     arithmeticLogicUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     loadStoreUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     branchUnits.forEach(u -> u.getReservationStation().receive(tag, result));
   }
 
   private void decode() {
-    System.out.println("\nDecode");
     dispatchReservationStations();
     if (!decodeBuffer.isEmpty()) {
       Instruction toIssue = decodeBuffer.peek();
-      toIssue.setTag(tagGenerator.generateTag());
+      if (toIssue.getTag() == null)
+        toIssue.setTag(tagGenerator.generateTag());
       boolean successfulIssue = false;
       switch(toIssue.getOpcode().getCategory()) {
         case ARITHMETIC:
@@ -165,8 +164,34 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       }
       if (successfulIssue) {
         decodeBuffer.poll();
+        System.out.println("ISSUED INSTRUCTION: " + toIssue.toString());
+      } else {
+        System.out.println("ISSUE BLOCKED: " + toIssue.toString());
       }
     }
+  }
+
+  public void printStatus() {
+    System.out.println("Reservation Stations:");
+    for (int i = 0; i < arithmeticLogicUnits.size(); i++)
+      System.out.println("ALU RS " + i + " | " + arithmeticLogicUnits.get(i).getReservationStation().getStatus());
+    for (int i = 0; i < branchUnits.size(); i++)
+      System.out.println("BRU RS " + i + " | " + branchUnits.get(i).getReservationStation().getStatus());
+    for (int i = 0; i < loadStoreUnits.size(); i++)
+      System.out.println("LSU RS " + i + " | " + loadStoreUnits.get(i).getReservationStation().getStatus());
+    System.out.println();
+
+    System.out.println("Execution Units:");
+    for (int i = 0; i < arithmeticLogicUnits.size(); i++)
+      System.out.println("ALU " + i + " | " + arithmeticLogicUnits.get(i).getStatus());
+    for (int i = 0; i < branchUnits.size(); i++)
+      System.out.println("BRU " + i + " | " + branchUnits.get(i).getStatus());
+    for (int i = 0; i < loadStoreUnits.size(); i++)
+      System.out.println("LSU " + i + " | " + loadStoreUnits.get(i).getStatus());
+    System.out.println();
+
+    System.out.println("Registers:");
+    System.out.print(registerFile.toString());
   }
 
   public void incrementExecutedInstructionCount() {
@@ -174,12 +199,10 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private void execute() {
-    System.out.println("\nExecute");
     tickUnits();
   }
 
   private void writeback() {
-    System.out.println("\nWriteback");
     if (!writebackBuffer.isEmpty()) {
       Instruction evaluatedInstruction = writebackBuffer.poll();
       evaluatedInstruction.getWritebackResult().ifPresent(res -> {
@@ -188,10 +211,11 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
           Register register = registerFile.getRegister(reg.getValue());
           if (register.getReservingTag().isPresent() && register.getReservingTag().get().getValue() == evaluatedInstruction.getTag().getValue()) {
             register.setFlag(RegisterFlag.VALID);
+            register.clearReservingTag();
             register.setValue(res);
           }
           broadcastToReservationStations(evaluatedInstruction.getTag(), res);
-          System.out.println("RS Broadcast: tag=" + evaluatedInstruction.getTag().getValue() + ", res=" + res);
+          System.out.println("WRITEBACK INSTRUCTION: " + evaluatedInstruction.toString() + " | Result: " + res);
         });
       });
     }

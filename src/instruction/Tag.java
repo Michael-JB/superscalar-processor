@@ -12,4 +12,9 @@ public class Tag {
     return value;
   }
 
+  @Override
+  public String toString() {
+    return "t" + value;
+  }
+
 }

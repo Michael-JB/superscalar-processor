@@ -44,9 +44,10 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         System.out.println(outputSep + "PROGRAM STEP START");
         while (processor.step()) {
-          System.out.print(processor.getRegisterFile().toString());
-          System.out.println(outputSep + "PROGRAM STEP");
+          System.out.println();
+          processor.printStatus();
           scanner.nextLine();
+          System.out.println(outputSep + "PROGRAM STEP");
         }
         scanner.close();
       } else {
@@ -55,9 +56,9 @@ public class Main {
         System.out.println(outputSep + "PROGRAM RUN END");
       }
 
-      System.out.println(outputSep + "REGISTER DUMP START");
-      System.out.print(processor.getRegisterFile().toString());
-      System.out.println(outputSep + "REGISTER DUMP END");
+      System.out.println(outputSep + "PROCESSOR STATUS START");
+      processor.printStatus();
+      System.out.println(outputSep + "PROCESSOR STATUS END");
 
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();
