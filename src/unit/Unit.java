@@ -4,6 +4,9 @@ import java.util.Optional;
 
 import core.Processor;
 import instruction.Instruction;
+import instruction.InstructionStatus;
+import memory.Register;
+import memory.RegisterFlag;
 import memory.ReservationStation;
 
 public abstract class Unit {
@@ -50,11 +53,22 @@ public abstract class Unit {
   private void completeCurrentInstruction() {
     if (hasInputInstruction()) {
       Instruction completed = inputInstruction.get();
+      completed.setInstructionStatus(InstructionStatus.EXECUTED);
       inputInstruction = Optional.empty();
       System.out.println("EXECUTION COMPLETE: " + completed.toString());
-      processor.pushToWritebackBuffer(completed);
       resetDelayCounter();
       processor.incrementExecutedInstructionCount();
+
+      completed.getExecutionResult().ifPresent(result -> {
+        completed.getDestinationRegister().ifPresent(reg -> {
+          Register register = processor.getRegisterFile().getRegister(reg.getValue());
+          processor.broadcastToReservationStations(completed.getTag(), result);
+          if (register.getReservingTag().isPresent() && register.getReservingTag().get().getValue() == completed.getTag().getValue()) {
+            register.setFlag(RegisterFlag.READY);
+          }
+        });
+      });
+
     } else {
       throw new IllegalArgumentException("Cannot complete non-existent instruction");
     }
@@ -68,6 +82,7 @@ public abstract class Unit {
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
         System.out.println("EXECUTION START: " + toExecute.toString());
+        toExecute.setInstructionStatus(InstructionStatus.EXECUTING);
       }
 
       /* Increment delay counter on each tick, until latency reached */

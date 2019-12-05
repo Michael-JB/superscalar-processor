@@ -11,7 +11,8 @@ public abstract class Instruction {
   protected final Opcode opcode;
   protected final Operand[] operands;
   protected Tag tag;
-  protected Optional<Integer> writebackResult = Optional.empty();
+  protected Optional<Integer> executionResult = Optional.empty();
+  protected InstructionStatus instructionStatus = InstructionStatus.PENDING;
 
   public Instruction(Opcode opcode, Operand... operands) {
     this.opcode = opcode;
@@ -24,6 +25,14 @@ public abstract class Instruction {
       throw new IllegalArgumentException(
         "Invalid operand count. " + operands.length + " provided, " + opcode.getOperandCount() + " required.");
     }
+  }
+
+  public void setInstructionStatus(InstructionStatus newStatus) {
+    this.instructionStatus = newStatus;
+  }
+
+  public InstructionStatus getInstructionStatus() {
+    return instructionStatus;
   }
 
   public Tag getTag() {
@@ -42,12 +51,12 @@ public abstract class Instruction {
     return operands;
   }
 
-  public Optional<Integer> getWritebackResult() {
-    return writebackResult;
+  public Optional<Integer> getExecutionResult() {
+    return executionResult;
   }
 
-  public void setWritebackResult(int result) {
-    this.writebackResult = Optional.of(result);
+  public void setExecutionResult(int result) {
+    this.executionResult = Optional.of(result);
   }
 
   public boolean isReady() {

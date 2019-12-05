@@ -14,7 +14,7 @@ public class ArithmeticLogicUnit extends Unit {
     /* Execute instruction */
     int executionResult = instruction.evaluate();
     /* Update instruction result */
-    instruction.setWritebackResult(executionResult);
+    instruction.setExecutionResult(executionResult);
   }
 
   @Override

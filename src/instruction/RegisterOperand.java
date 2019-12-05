@@ -2,8 +2,8 @@ package instruction;
 
 import java.util.Optional;
 
+import core.Processor;
 import memory.Register;
-import memory.RegisterFile;
 import memory.RegisterFlag;
 
 public class RegisterOperand extends Operand {
@@ -14,12 +14,23 @@ public class RegisterOperand extends Operand {
     super(value);
   }
 
-  public void tryRetrieveValue(RegisterFile registerFile) {
-    Register register = registerFile.getRegister(getValue());
+  public void tryRetrieveValue(Processor processor) {
+    Register register = processor.getRegisterFile().getRegister(getValue());
     if (register.getFlag().equals(RegisterFlag.VALID)) {
       setExecutionValue(register.getValue());
     } else if (register.getFlag().equals(RegisterFlag.INVALID)) {
       blockingTag = register.getReservingTag();
+    } else if (register.getFlag().equals(RegisterFlag.READY)) {
+      if (register.getReservingTag().isPresent()) {
+        Optional<Integer> reorderBufferValue = processor.getReorderBuffer().getValueForTag(register.getReservingTag().get());
+        if (reorderBufferValue.isPresent()) {
+          setExecutionValue(reorderBufferValue.get());
+        } else {
+          throw new IllegalArgumentException("Ready flag raised, but reorder buffer value not present");
+        }
+      } else {
+        throw new IllegalArgumentException("Ready flag raised, but reserving tag not present");
+      }
     }
   }
 

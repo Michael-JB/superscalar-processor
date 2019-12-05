@@ -44,7 +44,7 @@ public class LoadStoreUnit extends Unit {
 
     if (opcode == Opcode.LA || opcode == Opcode.LAI) {
       /* Load  instructions */
-      instruction.setWritebackResult(readFromMemory(targetAddress));
+      instruction.setExecutionResult(readFromMemory(targetAddress));
     } else {
       /* Store instructions */
       storeToMemory(targetAddress, instruction.getOperands()[0].getExecutionValue().get());

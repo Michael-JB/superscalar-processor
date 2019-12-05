@@ -55,7 +55,7 @@ public class ReservationStation {
 
   public boolean issue(Instruction instruction) {
     if (!isFull()) {
-      instruction.getSourceOperands().forEach(o -> o.tryRetrieveValue(processor.getRegisterFile()));
+      instruction.getSourceOperands().forEach(o -> o.tryRetrieveValue(processor));
 
       /* Set register flag to INVALID */
       Optional<RegisterOperand> destinationRegister = instruction.getDestinationRegister();

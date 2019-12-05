@@ -3,16 +3,13 @@ package core;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 
 import instruction.Instruction;
-import instruction.RegisterOperand;
 import instruction.Tag;
 import instruction.TagGenerator;
 import memory.Register;
 import memory.RegisterFile;
-import memory.RegisterFlag;
 import memory.ReorderBuffer;
 import memory.ReorderBufferEntry;
 import memory.ReservationStation;
@@ -39,7 +36,6 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
 
   private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
-  private final Queue<Instruction> writebackBuffer = new LinkedList<Instruction>();
 
   private final TagGenerator tagGenerator = new TagGenerator();
 
@@ -78,7 +74,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private boolean isProcessing() {
-    return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || !writebackBuffer.isEmpty()
+    return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || reorderBuffer.hasEntries()
       || arithmeticLogicUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
       || loadStoreUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
       || branchUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
@@ -89,10 +85,6 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
   public void pushToDecodeBuffer(Instruction instruction) {
     decodeBuffer.offer(instruction);
-  }
-
-  public void pushToWritebackBuffer(Instruction instruction) {
-    writebackBuffer.offer(instruction);
   }
 
   public Register getProgramCounter() {
@@ -109,6 +101,10 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
   public RegisterFile getRegisterFile() {
     return registerFile;
+  }
+
+  public ReorderBuffer getReorderBuffer() {
+    return reorderBuffer;
   }
 
   private boolean hasReachedProgramEnd() {
@@ -210,22 +206,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   }
 
   private void writeback() {
-    if (!writebackBuffer.isEmpty()) {
-      Instruction evaluatedInstruction = writebackBuffer.poll();
-      evaluatedInstruction.getWritebackResult().ifPresent(res -> {
-        Optional<RegisterOperand> destinationRegister = evaluatedInstruction.getDestinationRegister();
-        destinationRegister.ifPresent(reg -> {
-          Register register = registerFile.getRegister(reg.getValue());
-          if (register.getReservingTag().isPresent() && register.getReservingTag().get().getValue() == evaluatedInstruction.getTag().getValue()) {
-            register.setFlag(RegisterFlag.VALID);
-            register.clearReservingTag();
-            register.setValue(res);
-          }
-          broadcastToReservationStations(evaluatedInstruction.getTag(), res);
-          System.out.println("WRITEBACK INSTRUCTION: " + evaluatedInstruction.toString() + " | Result: " + res);
-        });
-      });
-    }
+    reorderBuffer.retire();
   }
 
   public void tick() {

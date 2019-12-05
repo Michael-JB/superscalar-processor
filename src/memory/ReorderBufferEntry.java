@@ -3,11 +3,13 @@ package memory;
 import java.util.Optional;
 
 import instruction.Instruction;
+import instruction.InstructionStatus;
 
 public class ReorderBufferEntry {
 
   private final Instruction instruction;
-  private Optional<Integer> executionResult = Optional.empty();
+  // private Optional<Integer> executionResult = Optional.empty();
+  // private boolean isComplete = false;
 
   public ReorderBufferEntry(Instruction instruction) {
     this.instruction = instruction;
@@ -17,12 +19,16 @@ public class ReorderBufferEntry {
     return instruction;
   }
 
-  public void setExecutionResult(int result) {
-    this.executionResult = Optional.of(result);
-  }
+  // public void setExecutionResult(int result) {
+  //   this.executionResult = Optional.of(result);
+  // }
 
   public Optional<Integer> getExecutionResult() {
-    return executionResult;
+    return instruction.getExecutionResult();
+  }
+
+  public boolean isComplete() {
+    return instruction.getInstructionStatus().equals(InstructionStatus.EXECUTED); // TODO: instructions without result
   }
 
   public String getStatus() {
@@ -31,6 +37,6 @@ public class ReorderBufferEntry {
 
   @Override
   public String toString() {
-    return instruction.toString() + " | " + (executionResult.isPresent() ? "Result: " + executionResult.get() : "No result");
+    return instruction.toString() + " | " + (getExecutionResult().isPresent() ? "Result: " + getExecutionResult().get() : "No result");
   }
 }
