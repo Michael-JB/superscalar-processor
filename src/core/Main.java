@@ -73,8 +73,8 @@ public class Main {
       System.out.println("Program instructions: " + instructionCount);
       System.out.println("Executed instructions: " + executedInstructionCount);
       System.out.println("Cycles taken: " + cycles);
-      System.out.println("Cycles per instruction: " + cyclesPerInstruction);
-      System.out.println("Instructions per cycle: " + instructionsPerCycle);
+      System.out.println("Cycles per instruction: " + String.format("%.2f", cyclesPerInstruction));
+      System.out.println("Instructions per cycle: " +  String.format("%.2f", instructionsPerCycle));
       log("ANALYTICS END");
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
