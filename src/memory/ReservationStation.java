@@ -3,7 +3,6 @@ package memory;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 
 import core.Processor;
 import instruction.DecodedInstruction;
@@ -17,7 +16,7 @@ public class ReservationStation {
   private final Processor processor;
   private final Unit unit;
 
-  private Queue<DecodedInstruction> instructionBuffer = new LinkedList<DecodedInstruction>();
+  private LinkedList<DecodedInstruction> instructionBuffer = new LinkedList<DecodedInstruction>();
 
   public ReservationStation(Processor processor, Unit unit) {
     this.unit = unit;
@@ -57,6 +56,13 @@ public class ReservationStation {
     if (!isFull()) {
       instruction.getSourceRegisters().forEach(o -> o.tryRetrieveValue(processor));
 
+      /* Bypass if instruction is already ready */
+      if (instruction.isReady() && isUnitReady() && instructionBuffer.isEmpty()) {
+        unit.inputInstruction(instruction);
+      } else {
+        instructionBuffer.offer(instruction);
+      }
+
       /* Set register flag to INVALID */
       Optional<DecodedRegisterOperand> destinationRegister = instruction.getDestinationRegister();
       destinationRegister.ifPresent(d -> {
@@ -65,17 +71,23 @@ public class ReservationStation {
         register.setReservingTag(instruction.getTag());
       });
 
-      instructionBuffer.offer(instruction);
       return true;
     }
     return false;
   }
 
+  private boolean isUnitReady() {
+    return !unit.hasInputInstruction();
+  }
+
   public void dispatch() {
-    if (!instructionBuffer.isEmpty()) {
-      DecodedInstruction toDispatch = instructionBuffer.peek();
-      if (toDispatch.isReady() && !unit.hasInputInstruction()) {
-        unit.inputInstruction(instructionBuffer.poll());
+    if (!instructionBuffer.isEmpty() && isUnitReady()) {
+      for (int i = 0; i < instructionBuffer.size(); i++) {
+        if (instructionBuffer.get(i).isReady()) {
+          unit.inputInstruction(instructionBuffer.get(i));
+          instructionBuffer.remove(i);
+          break;
+        }
       }
     }
   }
