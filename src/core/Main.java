@@ -41,7 +41,7 @@ public class Main {
     log("PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, 16, 32);
+      Processor processor = new Processor(parsedProgram, 4, 16, 32);
 
       if (interactiveMode) {
         Scanner scanner = new Scanner(System.in);

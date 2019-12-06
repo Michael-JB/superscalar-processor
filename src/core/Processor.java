@@ -27,12 +27,16 @@ import unit.UnitLoadComparator;
 
 public class Processor {
 
-  private final int ALU_COUNT = 1; // Arithmetic Logic units
+  private final int REORDER_BUFFER_CAPACITY = 16;
+  private final int LOAD_STORE_BUFFER_CAPACITY = 16;
+
+  private final int ALU_COUNT = 2; // Arithmetic Logic units
   private final int BU_COUNT = 1; // Branch units
-  private final int LSU_Count = 1; // Load store units
+  private final int LSU_Count = 2; // Load store units
 
   private final ParsedProgram parsedProgram;
 
+  private final int width;
   private final Memory memory;
   private final RegisterFile registerFile;
   private final Register programCounterRegister;
@@ -46,12 +50,13 @@ public class Processor {
 
   private final TagGenerator tagGenerator = new TagGenerator();
 
-  private final ReorderBuffer reorderBuffer = new ReorderBuffer(this);
+  private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
 
   private int cycleCount = 0, executedInstructionCount = 0;
 
-  public Processor(ParsedProgram parsedProgram, int registerFileCapacity, int memoryCapacity) {
+  public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity) {
     this.parsedProgram = parsedProgram;
+    this.width = width;
     this.registerFile = new RegisterFile(registerFileCapacity);
     this.memory = new Memory(memoryCapacity);
     for (int i = 0; i < ALU_COUNT; i++) {
@@ -83,6 +88,7 @@ public class Processor {
 
   private boolean isProcessing() {
     return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || reorderBuffer.hasEntries()
+      || reorderBuffer.getLoadStoreBuffer().hasEntries()
       || arithmeticLogicUnits.stream().anyMatch(Unit::isProcessing)
       || loadStoreUnits.stream().anyMatch(Unit::isProcessing)
       || branchUnits.stream().anyMatch(Unit::isProcessing);
@@ -90,6 +96,10 @@ public class Processor {
 
   public void pushToDecodeBuffer(FetchedInstruction instruction) {
     decodeBuffer.offer(instruction);
+  }
+
+  public int getWidth() {
+    return width;
   }
 
   public Memory getMemory() {
@@ -189,8 +199,8 @@ public class Processor {
           DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(o -> o.decode()).toArray(DecodedOperand[]::new);
           DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
 
-          toIssueTo.issue(decodedInstruction);
           reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
+          toIssueTo.issue(decodedInstruction);
           System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
         } else {
           System.out.println("ISSUE BLOCKED: " + toIssue.toString());
@@ -202,6 +212,10 @@ public class Processor {
   public void printStatus() {
     System.out.println("Re-order Buffer:");
     System.out.print(reorderBuffer.toString());
+    System.out.println();
+
+    System.out.println("Load-Store Buffer:");
+    System.out.print(reorderBuffer.getLoadStoreBuffer().toString());
     System.out.println();
 
     System.out.println("Reservation Stations:");
@@ -245,8 +259,14 @@ public class Processor {
   public void tick() {
     writeback();
     execute();
-    decode();
-    fetch();
+
+    for (int i = 0; i < width; i++) {
+      decode();
+    }
+
+    for (int i = 0; i < width; i++) {
+      fetch();
+    }
 
     cycleCount++;
   }

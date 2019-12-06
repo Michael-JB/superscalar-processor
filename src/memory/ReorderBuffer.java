@@ -11,15 +11,15 @@ import instruction.Tag;
 
 public class ReorderBuffer {
 
-  int REORDER_BUFFER_SIZE = 16;
-  int RETIRE_THRESHOLD = 1;
-
-  LinkedList<ReorderBufferEntry> reorderBuffer = new LinkedList<ReorderBufferEntry>();
-
+  private final int capacity;
+  private final LinkedList<ReorderBufferEntry> reorderBuffer = new LinkedList<ReorderBufferEntry>();
+  private final LoadStoreBuffer loadStoreBuffer;
   private final Processor processor;
 
-  public ReorderBuffer(Processor processor) {
+  public ReorderBuffer(Processor processor, int capacity, int loadStoreBufferCapacity) {
     this.processor = processor;
+    this.capacity = capacity;
+    loadStoreBuffer = new LoadStoreBuffer(loadStoreBufferCapacity);
   }
 
   public boolean hasEntries() {
@@ -27,24 +27,35 @@ public class ReorderBuffer {
   }
 
   public boolean isFull() {
-    return reorderBuffer.size() >= REORDER_BUFFER_SIZE;
+    return !loadStoreBuffer.isFull() && reorderBuffer.size() >= capacity;
   }
 
   public boolean pushToTail(ReorderBufferEntry entry) {
     if (!isFull()) {
       reorderBuffer.addLast(entry);
+      if (entry.getDecodedInstruction().getInstruction().getOpcode().getCategory().equals(OpcodeCategory.MEMORY)) {
+        loadStoreBuffer.pushToTail(entry.getDecodedInstruction());
+      }
       return true;
     }
     return false;
   }
 
   public Optional<Integer> getValueForTag(Tag tag) {
-    return reorderBuffer.stream().filter(entry -> entry.getDecodedInstruction().getTag().matches(tag)).map(entry -> entry.getDecodedInstruction().getExecutionResult()).findAny().orElse(Optional.empty());
+    return reorderBuffer.stream()
+      .filter(entry -> entry.getDecodedInstruction().getTag().matches(tag))
+      .map(entry -> entry.getDecodedInstruction().getExecutionResult())
+      .findAny()
+      .orElse(Optional.empty());
+  }
+
+  public LoadStoreBuffer getLoadStoreBuffer() {
+    return loadStoreBuffer;
   }
 
   public void retire() {
     int instructionsRetired = 0;
-    while (hasEntries() && reorderBuffer.peekFirst().isComplete() && instructionsRetired < RETIRE_THRESHOLD) {
+    while (hasEntries() && reorderBuffer.peekFirst().isComplete() && instructionsRetired < processor.getWidth()) {
 
       ReorderBufferEntry toRetire = reorderBuffer.pollFirst();
       toRetire.getDecodedInstruction().getExecutionResult().ifPresent(result -> {
@@ -82,6 +93,7 @@ public class ReorderBuffer {
         }
       });
 
+      loadStoreBuffer.retireInstruction(toRetire.getDecodedInstruction());
       processor.getTagGenerator().retireTag(toRetire.getDecodedInstruction().getTag());
       System.out.println("RETIRE INSTRUCTION: " + toRetire.getDecodedInstruction().toString());
       instructionsRetired++;
@@ -90,6 +102,7 @@ public class ReorderBuffer {
 
   public void flush() {
     reorderBuffer.clear();
+    loadStoreBuffer.flush();
   }
 
   @Override

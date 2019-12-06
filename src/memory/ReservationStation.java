@@ -7,6 +7,7 @@ import java.util.Optional;
 import core.Processor;
 import instruction.DecodedInstruction;
 import instruction.DecodedRegisterOperand;
+import instruction.Opcode;
 import instruction.Tag;
 import unit.Unit;
 
@@ -39,6 +40,17 @@ public class ReservationStation {
     return instructionBuffer.size() >= RESERVATION_STATION_SIZE;
   }
 
+  public boolean isMemoryReady(DecodedInstruction instruction) {
+    Opcode opcode = instruction.getInstruction().getOpcode();
+    if (opcode.equals(Opcode.LA) || opcode.equals(Opcode.LAI)) {
+      if (instruction.isReady()) {
+        return !processor.getReorderBuffer().getLoadStoreBuffer().previousStoreExistsForInstruction(instruction);
+      }
+      return false;
+    }
+    return true;
+  }
+
   public void receive(Tag tag, int result) {
     instructionBuffer.forEach(instruction -> {
       if (!instruction.isReady()) {
@@ -52,12 +64,16 @@ public class ReservationStation {
     });
   }
 
+  private boolean canDispatch(DecodedInstruction instruction) {
+    return isMemoryReady(instruction) && isUnitReady() && instruction.isReady();
+  }
+
   public boolean issue(DecodedInstruction instruction) {
     if (!isFull()) {
       instruction.getSourceRegisters().forEach(o -> o.tryRetrieveValue(processor));
 
       /* Bypass if instruction is already ready */
-      if (instruction.isReady() && isUnitReady() && instructionBuffer.isEmpty()) {
+      if (canDispatch(instruction) && instructionBuffer.isEmpty()) { // TODO - does empty buffer matter?
         unit.inputInstruction(instruction);
       } else {
         instructionBuffer.offer(instruction);
@@ -81,13 +97,11 @@ public class ReservationStation {
   }
 
   public void dispatch() {
-    if (!instructionBuffer.isEmpty() && isUnitReady()) {
-      for (int i = 0; i < instructionBuffer.size(); i++) {
-        if (instructionBuffer.get(i).isReady()) {
-          unit.inputInstruction(instructionBuffer.get(i));
-          instructionBuffer.remove(i);
-          break;
-        }
+    for (int i = 0; i < instructionBuffer.size(); i++) {
+      if (canDispatch(instructionBuffer.get(i))) {
+        unit.inputInstruction(instructionBuffer.get(i));
+        instructionBuffer.remove(i);
+        break;
       }
     }
   }
