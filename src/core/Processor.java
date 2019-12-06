@@ -25,7 +25,7 @@ import unit.LoadStoreUnit;
 import unit.Unit;
 import unit.UnitLoadComparator;
 
-public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
+public class Processor {
 
   private final int ALU_COUNT = 1; // Arithmetic Logic units
   private final int BU_COUNT = 1; // Branch units

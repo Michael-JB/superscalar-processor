@@ -7,14 +7,14 @@ public enum Opcode {
   SUB (OpcodeCategory.ARITHMETIC, 3, 1), /* sub  r1 r2 r3 = r1 <- r2 - r3 */
   ADDI(OpcodeCategory.ARITHMETIC, 3, 1), /* addi r1 r2 v1 = r1 <- r2 + v1 */
   SUBI(OpcodeCategory.ARITHMETIC, 3, 1), /* subi r1 r2 v1 = r1 <- r2 - v1 */
-  MUL (OpcodeCategory.ARITHMETIC, 3, 1), /* mul  r1 r2 r3 = r1 <- r2 * r3 */
-  DIV (OpcodeCategory.ARITHMETIC, 3, 1), /* div  r1 r2 r3 = r1 <- r2 / r3 */
+  MUL (OpcodeCategory.ARITHMETIC, 3, 2), /* mul  r1 r2 r3 = r1 <- r2 * r3 */
+  DIV (OpcodeCategory.ARITHMETIC, 3, 8), /* div  r1 r2 r3 = r1 <- r2 / r3 */
   CMP (OpcodeCategory.ARITHMETIC, 3, 1), /* cmp  r1 r2 r3 = r1 <- {-1 if r2 < r3, 0 if r2 = r3, 1 if r2 > r3} */
   MOVE(OpcodeCategory.ARITHMETIC, 2, 1), /* move r1 v1    = r1 <- v1 */
 
   /* Memory */
-  LA  (OpcodeCategory.MEMORY, 3, 1),     /* la   r1 r2 v1 = r1 <- [r2 + v1] */
-  LAI (OpcodeCategory.MEMORY, 2, 1),     /* lai  r1 v1    = r1 <- [v1] */
+  LA  (OpcodeCategory.MEMORY, 3, 2),     /* la   r1 r2 v1 = r1 <- [r2 + v1] */
+  LAI (OpcodeCategory.MEMORY, 2, 2),     /* lai  r1 v1    = r1 <- [v1] */
   SA  (OpcodeCategory.MEMORY, 3, 1),     /* sa   r1 r2 v1 = [r2 + v1] <- r1 */
   SAI (OpcodeCategory.MEMORY, 2, 1),     /* sai  r1 v1    = [v1] <- r1 */
 
