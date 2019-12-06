@@ -3,6 +3,7 @@ package memory;
 import java.util.LinkedList;
 import java.util.Optional;
 
+import control.BranchTargetAddressCacheEntry;
 import core.Processor;
 import instruction.DecodedRegisterOperand;
 import instruction.Opcode;
@@ -72,18 +73,17 @@ public class ReorderBuffer {
         Register programCounterRegister = processor.getProgramCounter();
         Opcode retiringOpcode = toRetire.getDecodedInstruction().getInstruction().getOpcode();
 
-        if (retiringOpcode.getCategory().equals(OpcodeCategory.CONTROL) && result != 0) {
-          if (retiringOpcode == Opcode.NOP) {
-            /* Do nothing */
-          } else if (retiringOpcode == Opcode.JMP || retiringOpcode == Opcode.JMPR) {
-            /* Jump instruction, so update program counter absolutely */
-            programCounterRegister.setValue(result);
-            processor.flushPipeline();
-          } else {
-            /* Branch instruction, so update program counter relatively */
-            programCounterRegister.setValue(toRetire.getDecodedInstruction().getLineNumber() + result);
-            processor.flushPipeline();
-          }
+        if (retiringOpcode.getCategory().equals(OpcodeCategory.CONTROL)
+          && toRetire.getDecodedInstruction().getBranchTarget().isPresent()) {
+          toRetire.getDecodedInstruction().getBranchTaken().ifPresent(taken -> {
+            if (taken) {
+              programCounterRegister.setValue(toRetire.getDecodedInstruction().getBranchTarget().get());
+              processor.flushPipeline();
+            }
+            BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(
+              toRetire.getDecodedInstruction().getBranchTarget().get());
+            processor.getBranchTargetAddressCache().addEntry(toRetire.getDecodedInstruction().getLineNumber(), entry);
+          });
         }
 
         if (retiringOpcode.getCategory().equals(OpcodeCategory.MEMORY)) {

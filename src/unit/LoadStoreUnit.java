@@ -17,14 +17,12 @@ public class LoadStoreUnit extends Unit {
     /* Execute instruction */
     int targetAddress = instruction.evaluate();
 
-
     if (opcode == Opcode.LA || opcode == Opcode.LAI) {
       /* Load  instructions */
       instruction.setExecutionResult(processor.getMemory().readFromMemory(targetAddress));
     } else {
       /* Store instructions */
       instruction.setExecutionResult(targetAddress);
-      // storeToMemory(targetAddress, instruction.getOperands()[0].getExecutionValue().get());
     }
   }
 

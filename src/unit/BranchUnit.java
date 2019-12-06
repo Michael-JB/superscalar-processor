@@ -1,7 +1,10 @@
 package unit;
 
+import java.util.Arrays;
+
 import core.Processor;
 import instruction.DecodedInstruction;
+import instruction.DecodedValueOperand;
 import instruction.Opcode;
 
 public class BranchUnit extends Unit {
@@ -16,19 +19,19 @@ public class BranchUnit extends Unit {
 
     /* Execute instruction */
     int executionResult = instruction.evaluate();
-
-    // Register programCounterRegister = processor.getProgramCounter();
-
+    /* Update instruction result */
     instruction.setExecutionResult(executionResult);
 
     if (opcode == Opcode.NOP) {
       /* Do nothing */
-    } else if (opcode == Opcode.JMP || opcode == Opcode.JMPR) {
+    } else if (opcode == Opcode.JMP) {
       /* Jump instruction, so update program counter absolutely */
-      // programCounterRegister.setValue(executionResult);
+      instruction.setBranchTarget(executionResult);
+      instruction.setBranchTaken(true);
     } else {
       /* Branch instruction, so update program counter relatively */
-      //programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
+      instruction.setBranchTarget(instruction.getLineNumber() + executionResult);
+      instruction.setBranchTaken(executionResult != 0);
     }
   }
 

@@ -23,7 +23,6 @@ import instruction.CompareInstruction;
 import instruction.DivideInstruction;
 import instruction.Instruction;
 import instruction.JumpInstruction;
-import instruction.JumpRegisterInstruction;
 import instruction.LoadImmediateInstruction;
 import instruction.LoadInstruction;
 import instruction.MoveInstruction;
@@ -307,15 +306,6 @@ public class Assembler {
             Optional<ValueOperand> operand1 = parseValueOperand(tokens[1]);
             if (operand1.isPresent()) {
               return Optional.of(new JumpInstruction(operand1.get()));
-            }
-          }
-          break;
-        case "jmpr":
-          opcode = Opcode.JMPR;
-          if (tokens.length > opcode.getOperandCount()) {
-            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
-            if (operand1.isPresent()) {
-              return Optional.of(new JumpRegisterInstruction(operand1.get()));
             }
           }
           break;

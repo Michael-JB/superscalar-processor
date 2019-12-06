@@ -36,7 +36,7 @@ public class Memory {
     int entryCount = Math.min(entriesToShow, memoryCapacity);
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < entryCount; i++) {
-      sb.append("[" + i + "]: " + memory[i] + System.lineSeparator());
+      sb.append("[" + String.format("%-" + String.valueOf(entriesToShow - 1).length() + "d", i) + "]: " + memory[i] + System.lineSeparator());
     }
     return sb.toString();
   }

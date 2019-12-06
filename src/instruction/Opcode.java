@@ -26,7 +26,6 @@ public enum Opcode {
   BLT (OpcodeCategory.CONTROL, 3, 1),    /* blt  r1 r2 v1 = PC += {v1 if r1 < r2, 0 otherwise} */
   BLE (OpcodeCategory.CONTROL, 3, 1),    /* ble  r1 r2 v1 = PC += {v1 if r1 <= r2, 0 otherwise} */
   JMP (OpcodeCategory.CONTROL, 1, 1),    /* jmp v1        = PC <- v1 */
-  JMPR(OpcodeCategory.CONTROL, 1, 1),    /* jmpr r1       = PC <- r1 */
   NOP (OpcodeCategory.CONTROL, 0, 1),    /* nop           = Do nothing */
   ;
 

@@ -67,10 +67,18 @@ public class LoadStoreBuffer {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    if (!loadStoreBuffer.isEmpty()) {
-      loadStoreBuffer.stream().forEachOrdered(i -> sb.append(i.toString() + System.lineSeparator()));
-    } else {
+    if (loadStoreBuffer.isEmpty()) {
       sb.append("Empty" + System.lineSeparator());
+    } else {
+      for (int i = 0; i < loadStoreBuffer.size(); i++) {
+        String header = "      |  ";
+        if (i == 0) {
+          header = "HEAD --> ";
+        } else if (i == loadStoreBuffer.size() - 1) {
+          header = "TAIL --> ";
+        }
+        sb.append(header + loadStoreBuffer.get(i).toString() + System.lineSeparator());
+      }
     }
     return sb.toString();
   }

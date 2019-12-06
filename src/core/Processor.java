@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import control.BranchTargetAddressCache;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
 import instruction.FetchedInstruction;
@@ -47,6 +48,8 @@ public class Processor {
   private final TagGenerator tagGenerator = new TagGenerator();
   private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
 
+  private final BranchTargetAddressCache branchTargetAddressCache = new BranchTargetAddressCache();
+
   private int cycleCount = 0, executedInstructionCount = 0;
 
   public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity) {
@@ -87,6 +90,10 @@ public class Processor {
       || arithmeticLogicUnits.stream().anyMatch(Unit::isProcessing)
       || loadStoreUnits.stream().anyMatch(Unit::isProcessing)
       || branchUnits.stream().anyMatch(Unit::isProcessing);
+  }
+
+  public BranchTargetAddressCache getBranchTargetAddressCache() {
+    return branchTargetAddressCache;
   }
 
   public void pushToDecodeBuffer(FetchedInstruction instruction) {
@@ -213,6 +220,10 @@ public class Processor {
     System.out.print(reorderBuffer.getLoadStoreBuffer().toString());
     System.out.println();
 
+    System.out.println("Branch Target Address Cache:");
+    System.out.print(branchTargetAddressCache.toString());
+    System.out.println();
+
     System.out.println("Reservation Stations:");
     for (int i = 0; i < arithmeticLogicUnits.size(); i++)
       System.out.println("ALU RS " + i + " | " + arithmeticLogicUnits.get(i).getReservationStation().getStatus());
@@ -236,7 +247,7 @@ public class Processor {
     System.out.println();
 
     System.out.println("Memory:");
-    System.out.println(memory.toString(5));
+    System.out.println(memory.toString(8));
   }
 
   public void incrementExecutedInstructionCount() {
@@ -254,14 +265,10 @@ public class Processor {
   public void tick() {
     writeback();
     execute();
-
-    for (int i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++)
       decode();
-    }
-
-    for (int i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++)
       fetch();
-    }
 
     cycleCount++;
   }

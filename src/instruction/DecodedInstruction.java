@@ -13,6 +13,8 @@ public class DecodedInstruction {
   protected final Tag tag;
   protected final int lineNumber;
   protected Optional<Integer> executionResult = Optional.empty();
+  protected Optional<Integer> branchTarget = Optional.empty();
+  protected Optional<Boolean> branchTaken = Optional.empty();
   protected InstructionStatus instructionStatus = InstructionStatus.PENDING;
 
   public DecodedInstruction(Instruction instruction, Tag tag, int lineNumber, DecodedOperand... decodedOperands) {
@@ -37,6 +39,22 @@ public class DecodedInstruction {
 
   public void setInstructionStatus(InstructionStatus newStatus) {
     this.instructionStatus = newStatus;
+  }
+
+  public void setBranchTaken(boolean taken) {
+    this.branchTaken = Optional.of(taken);
+  }
+
+  public void setBranchTarget(int target) {
+    this.branchTarget = Optional.of(target);
+  }
+
+  public Optional<Boolean> getBranchTaken() {
+    return branchTaken;
+  }
+
+  public Optional<Integer> getBranchTarget() {
+    return branchTarget;
   }
 
   public InstructionStatus getInstructionStatus() {
