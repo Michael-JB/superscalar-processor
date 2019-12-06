@@ -27,7 +27,7 @@ public class ReorderBuffer {
   }
 
   public boolean isFull() {
-    return !loadStoreBuffer.isFull() && reorderBuffer.size() >= capacity;
+    return loadStoreBuffer.isFull() || reorderBuffer.size() >= capacity;
   }
 
   public boolean pushToTail(ReorderBufferEntry entry) {

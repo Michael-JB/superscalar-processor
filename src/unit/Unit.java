@@ -17,9 +17,9 @@ public abstract class Unit {
 
   protected Optional<DecodedInstruction> inputInstruction = Optional.empty();
 
-  public Unit(Processor processor) {
+  public Unit(Processor processor, int reservationStationCapacity) {
     this.processor = processor;
-    this.reservationStation = new ReservationStation(processor, this);
+    this.reservationStation = new ReservationStation(processor, this, reservationStationCapacity);
   }
 
   public void inputInstruction(DecodedInstruction instruction) {

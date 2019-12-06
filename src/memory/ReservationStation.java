@@ -13,15 +13,16 @@ import unit.Unit;
 
 public class ReservationStation {
 
-  private final int RESERVATION_STATION_SIZE = 4;
+  private final int capacity;
   private final Processor processor;
   private final Unit unit;
 
   private LinkedList<DecodedInstruction> instructionBuffer = new LinkedList<DecodedInstruction>();
 
-  public ReservationStation(Processor processor, Unit unit) {
-    this.unit = unit;
+  public ReservationStation(Processor processor, Unit unit, int capacity) {
     this.processor = processor;
+    this.unit = unit;
+    this.capacity = capacity;
   }
 
   public Unit getUnit() {
@@ -37,7 +38,7 @@ public class ReservationStation {
   }
 
   public boolean isFull() {
-    return instructionBuffer.size() >= RESERVATION_STATION_SIZE;
+    return instructionBuffer.size() >= capacity;
   }
 
   public boolean isMemoryReady(DecodedInstruction instruction) {
@@ -111,7 +112,7 @@ public class ReservationStation {
   }
 
   public String getStatus() {
-    return "(" + bufferedInstructionCount() + "/" + RESERVATION_STATION_SIZE + ") | " + instructionBuffer.toString();
+    return "(" + bufferedInstructionCount() + "/" + capacity + ") | " + instructionBuffer.toString();
   }
 
 }

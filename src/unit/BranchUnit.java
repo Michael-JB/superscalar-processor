@@ -6,8 +6,8 @@ import instruction.Opcode;
 
 public class BranchUnit extends Unit {
 
-  public BranchUnit(Processor processor) {
-    super(processor);
+  public BranchUnit(Processor processor, int reservationStationCapacity) {
+    super(processor, reservationStationCapacity);
   }
 
   @Override

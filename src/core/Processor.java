@@ -29,27 +29,22 @@ public class Processor {
 
   private final int REORDER_BUFFER_CAPACITY = 16;
   private final int LOAD_STORE_BUFFER_CAPACITY = 16;
-
+  private final int RESERVATION_STATION_CAPACITIES = 4;
   private final int ALU_COUNT = 2; // Arithmetic Logic units
   private final int BU_COUNT = 1; // Branch units
   private final int LSU_Count = 2; // Load store units
 
   private final ParsedProgram parsedProgram;
-
   private final int width;
   private final Memory memory;
   private final RegisterFile registerFile;
   private final Register programCounterRegister;
-
   private final List<BranchUnit> branchUnits = new ArrayList<BranchUnit>();
   private final List<ArithmeticLogicUnit> arithmeticLogicUnits = new ArrayList<ArithmeticLogicUnit>();
   private final List<LoadStoreUnit> loadStoreUnits = new ArrayList<LoadStoreUnit>();
   private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
-
   private final Queue<FetchedInstruction> decodeBuffer = new LinkedList<FetchedInstruction>();
-
   private final TagGenerator tagGenerator = new TagGenerator();
-
   private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
 
   private int cycleCount = 0, executedInstructionCount = 0;
@@ -60,13 +55,13 @@ public class Processor {
     this.registerFile = new RegisterFile(registerFileCapacity);
     this.memory = new Memory(memoryCapacity);
     for (int i = 0; i < ALU_COUNT; i++) {
-      arithmeticLogicUnits.add(new ArithmeticLogicUnit(this));
+      arithmeticLogicUnits.add(new ArithmeticLogicUnit(this, RESERVATION_STATION_CAPACITIES));
     }
     for (int i = 0; i < BU_COUNT; i++) {
-      branchUnits.add(new BranchUnit(this));
+      branchUnits.add(new BranchUnit(this, RESERVATION_STATION_CAPACITIES));
     }
     for (int i = 0; i < LSU_Count; i++) {
-      loadStoreUnits.add(new LoadStoreUnit(this));
+      loadStoreUnits.add(new LoadStoreUnit(this, RESERVATION_STATION_CAPACITIES));
     }
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);

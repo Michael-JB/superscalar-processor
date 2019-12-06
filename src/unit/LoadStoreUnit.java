@@ -6,8 +6,8 @@ import instruction.Opcode;
 
 public class LoadStoreUnit extends Unit {
 
-  public LoadStoreUnit(Processor processor) {
-    super(processor);
+  public LoadStoreUnit(Processor processor, int reservationStationCapacity) {
+    super(processor, reservationStationCapacity);
   }
 
   @Override

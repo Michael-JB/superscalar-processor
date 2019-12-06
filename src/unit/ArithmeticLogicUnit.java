@@ -5,8 +5,8 @@ import instruction.DecodedInstruction;
 
 public class ArithmeticLogicUnit extends Unit {
 
-  public ArithmeticLogicUnit(Processor processor) {
-    super(processor);
+  public ArithmeticLogicUnit(Processor processor, int reservationStationCapacity) {
+    super(processor, reservationStationCapacity);
   }
 
   @Override
