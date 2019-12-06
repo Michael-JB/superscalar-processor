@@ -1,9 +1,8 @@
 package unit;
 
 import core.Processor;
-import instruction.Instruction;
+import instruction.DecodedInstruction;
 import instruction.Opcode;
-import memory.Register;
 
 public class BranchUnit extends Unit {
 
@@ -12,22 +11,24 @@ public class BranchUnit extends Unit {
   }
 
   @Override
-  public void process(Instruction instruction) {
-    Opcode opcode = instruction.getOpcode();
+  public void process(DecodedInstruction instruction) {
+    Opcode opcode = instruction.getInstruction().getOpcode();
 
     /* Execute instruction */
     int executionResult = instruction.evaluate();
 
-    Register programCounterRegister = processor.getProgramCounter();
+    // Register programCounterRegister = processor.getProgramCounter();
+
+    instruction.setExecutionResult(executionResult);
 
     if (opcode == Opcode.NOP) {
       /* Do nothing */
     } else if (opcode == Opcode.JMP || opcode == Opcode.JMPR) {
       /* Jump instruction, so update program counter absolutely */
-      programCounterRegister.setValue(executionResult);
+      // programCounterRegister.setValue(executionResult);
     } else {
       /* Branch instruction, so update program counter relatively */
-      programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
+      //programCounterRegister.setValue(programCounterRegister.getValue() + executionResult);
     }
   }
 

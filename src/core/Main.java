@@ -10,6 +10,10 @@ public class Main {
 
   private final static String defaultProgramFileName = "./programs/add.asm";
 
+  private static void log(String message) {
+    System.out.println("------------------------------ " + message);
+  }
+
   public static void main(String[] args) {
 
     String programFileName = defaultProgramFileName;
@@ -31,34 +35,33 @@ public class Main {
 
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
-    String outputSep = "------------------------------ ";
 
-    System.out.println(outputSep + "PROGRAM INSTRUCTIONS START");
+    log("PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
-    System.out.println(outputSep + "PROGRAM INSTRUCTIONS END");
+    log("PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, 16, 100);
+      Processor processor = new Processor(parsedProgram, 16, 32);
 
       if (interactiveMode) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println(outputSep + "PROGRAM STEP START");
+        log("PROGRAM STEP START");
         while (processor.step()) {
           System.out.println();
           processor.printStatus();
           scanner.nextLine();
-          System.out.println(outputSep + "PROGRAM STEP");
+          log("PROGRAM STEP");
         }
         scanner.close();
       } else {
-        System.out.println(outputSep + "PROGRAM RUN START");
+        log("PROGRAM RUN START");
         processor.run();
-        System.out.println(outputSep + "PROGRAM RUN END");
+        log("PROGRAM RUN END");
       }
 
-      System.out.println(outputSep + "PROCESSOR STATUS START");
+      log("PROCESSOR FINAL STATUS START");
       processor.printStatus();
-      System.out.println(outputSep + "PROCESSOR STATUS END");
+      log("PROCESSOR FINAL STATUS END");
 
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();
@@ -66,13 +69,13 @@ public class Main {
       float cyclesPerInstruction = (float) cycles / (float) executedInstructionCount;
       float instructionsPerCycle = (float) executedInstructionCount / (float) cycles;
 
-      System.out.println(outputSep + "ANALYTICS START");
+      log("ANALYTICS START");
       System.out.println("Program instructions: " + instructionCount);
       System.out.println("Executed instructions: " + executedInstructionCount);
       System.out.println("Cycles taken: " + cycles);
       System.out.println("Cycles per instruction: " + cyclesPerInstruction);
       System.out.println("Instructions per cycle: " + instructionsPerCycle);
-      System.out.println(outputSep + "ANALYTICS END");
+      log("ANALYTICS END");
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }

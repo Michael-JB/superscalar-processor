@@ -1,34 +1,22 @@
 package memory;
 
-import java.util.Optional;
-
-import instruction.Instruction;
+import instruction.DecodedInstruction;
 import instruction.InstructionStatus;
 
 public class ReorderBufferEntry {
 
-  private final Instruction instruction;
-  // private Optional<Integer> executionResult = Optional.empty();
-  // private boolean isComplete = false;
+  private final DecodedInstruction instruction;
 
-  public ReorderBufferEntry(Instruction instruction) {
+  public ReorderBufferEntry(DecodedInstruction instruction) {
     this.instruction = instruction;
   }
 
-  public Instruction getInstruction() {
+  public DecodedInstruction getDecodedInstruction() {
     return instruction;
   }
 
-  // public void setExecutionResult(int result) {
-  //   this.executionResult = Optional.of(result);
-  // }
-
-  public Optional<Integer> getExecutionResult() {
-    return instruction.getExecutionResult();
-  }
-
   public boolean isComplete() {
-    return instruction.getInstructionStatus().equals(InstructionStatus.EXECUTED); // TODO: instructions without result
+    return instruction.getInstructionStatus().equals(InstructionStatus.EXECUTED);
   }
 
   public String getStatus() {
@@ -37,6 +25,7 @@ public class ReorderBufferEntry {
 
   @Override
   public String toString() {
-    return instruction.toString() + " | " + (getExecutionResult().isPresent() ? "Result: " + getExecutionResult().get() : "No result");
+    return instruction.toString() + " (Result: " +
+      (instruction.getExecutionResult().isPresent() ? instruction.getExecutionResult().get() : "-") + ")";
   }
 }

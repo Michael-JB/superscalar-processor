@@ -4,7 +4,11 @@ public class ValueOperand extends Operand {
 
   public ValueOperand(int value) {
     super(value);
-    setExecutionValue(value);
+  }
+
+  @Override
+  public DecodedOperand decode() {
+    return new DecodedValueOperand(this);
   }
 
   @Override

@@ -7,7 +7,7 @@ public class MoveInstruction extends Instruction {
   }
 
   @Override
-  public int eval() {
+  public int evaluate(DecodedOperand... operands) {
     return operands[1].getExecutionValue().get();
   }
 

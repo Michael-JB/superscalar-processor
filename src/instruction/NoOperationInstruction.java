@@ -7,7 +7,7 @@ public class NoOperationInstruction extends Instruction {
   }
 
   @Override
-  public int eval() {
+  public int evaluate(DecodedOperand... operands) {
     return 0;
   }
 

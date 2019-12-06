@@ -1,13 +1,18 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import instruction.DecodedInstruction;
+import instruction.DecodedOperand;
+import instruction.FetchedInstruction;
 import instruction.Instruction;
 import instruction.Tag;
 import instruction.TagGenerator;
+import memory.Memory;
 import memory.Register;
 import memory.RegisterFile;
 import memory.ReorderBuffer;
@@ -17,6 +22,7 @@ import parse.ParsedProgram;
 import unit.ArithmeticLogicUnit;
 import unit.BranchUnit;
 import unit.LoadStoreUnit;
+import unit.Unit;
 import unit.UnitLoadComparator;
 
 public class Processor { /* CONSTRAINT: Currently only works if all instructions have latency 1 */
@@ -27,6 +33,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
   private final ParsedProgram parsedProgram;
 
+  private final Memory memory;
   private final RegisterFile registerFile;
   private final Register programCounterRegister;
 
@@ -35,7 +42,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private final List<LoadStoreUnit> loadStoreUnits = new ArrayList<LoadStoreUnit>();
   private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
 
-  private final Queue<Instruction> decodeBuffer = new LinkedList<Instruction>();
+  private final Queue<FetchedInstruction> decodeBuffer = new LinkedList<FetchedInstruction>();
 
   private final TagGenerator tagGenerator = new TagGenerator();
 
@@ -46,6 +53,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   public Processor(ParsedProgram parsedProgram, int registerFileCapacity, int memoryCapacity) {
     this.parsedProgram = parsedProgram;
     this.registerFile = new RegisterFile(registerFileCapacity);
+    this.memory = new Memory(memoryCapacity);
     for (int i = 0; i < ALU_COUNT; i++) {
       arithmeticLogicUnits.add(new ArithmeticLogicUnit(this));
     }
@@ -53,7 +61,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       branchUnits.add(new BranchUnit(this));
     }
     for (int i = 0; i < LSU_Count; i++) {
-      loadStoreUnits.add(new LoadStoreUnit(this, memoryCapacity));
+      loadStoreUnits.add(new LoadStoreUnit(this));
     }
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
@@ -83,8 +91,12 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       || branchUnits.stream().anyMatch(u -> u.hasInputInstruction());
   }
 
-  public void pushToDecodeBuffer(Instruction instruction) {
+  public void pushToDecodeBuffer(FetchedInstruction instruction) {
     decodeBuffer.offer(instruction);
+  }
+
+  public Memory getMemory() {
+    return memory;
   }
 
   public Register getProgramCounter() {
@@ -111,15 +123,25 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
 
+  public void flushPipeline() {
+    arithmeticLogicUnits.forEach(Unit::flush);
+    loadStoreUnits.forEach(Unit::flush);
+    branchUnits.forEach(Unit::flush);
+    registerFile.flush();
+    reorderBuffer.flush();
+    decodeBuffer.clear();
+  }
+
   private void tickUnits() {
-    arithmeticLogicUnits.forEach(u -> u.tick());
-    loadStoreUnits.forEach(u -> u.tick());
-    branchUnits.forEach(u -> u.tick());
+    arithmeticLogicUnits.forEach(Unit::tick);
+    loadStoreUnits.forEach(Unit::tick);
+    branchUnits.forEach(Unit::tick);
   }
 
   private void fetch() {
     if (!hasReachedProgramEnd()) {
-      Instruction fetchedInstruction = parsedProgram.getInstructions().get(getProgramCounter().getValue());
+      Instruction next = parsedProgram.getInstructions().get(getProgramCounter().getValue());
+      FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
       pushToDecodeBuffer(fetchedInstruction);
       getProgramCounter().setValue(getProgramCounter().getValue() + 1);
       System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
@@ -141,10 +163,10 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
   private void decode() {
     dispatchReservationStations();
     if (!decodeBuffer.isEmpty()) {
-      Instruction toIssue = decodeBuffer.peek();
+      FetchedInstruction toIssue = decodeBuffer.peek();
       ReservationStation toIssueTo = null;
 
-      switch(toIssue.getOpcode().getCategory()) {
+      switch(toIssue.getInstruction().getOpcode().getCategory()) {
         case ARITHMETIC:
           toIssueTo = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation();
           break;
@@ -159,10 +181,15 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
       if (toIssueTo != null) {
         if (!toIssueTo.isFull() && !reorderBuffer.isFull()) {
           decodeBuffer.poll();
-          toIssue.setTag(tagGenerator.generateTag());
-          toIssueTo.issue(toIssue);
-          reorderBuffer.pushToTail(new ReorderBufferEntry(toIssue));
-          System.out.println("ISSUED INSTRUCTION: " + toIssue.toString());
+
+          Tag tag = tagGenerator.generateTag();
+          int lineNumber = toIssue.getLineNumber();
+          DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(o -> o.decode()).toArray(DecodedOperand[]::new);
+          DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
+
+          toIssueTo.issue(decodedInstruction);
+          reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
+          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
         } else {
           System.out.println("ISSUE BLOCKED: " + toIssue.toString());
         }
@@ -172,7 +199,7 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
   public void printStatus() {
     System.out.println("Re-order Buffer:");
-    System.out.println(reorderBuffer.getStatus());
+    System.out.print(reorderBuffer.toString());
     System.out.println();
 
     System.out.println("Reservation Stations:");
@@ -195,6 +222,10 @@ public class Processor { /* CONSTRAINT: Currently only works if all instructions
 
     System.out.println("Registers:");
     System.out.print(registerFile.toString());
+    System.out.println();
+
+    System.out.println("Memory:");
+    System.out.println(memory.toString(5));
   }
 
   public void incrementExecutedInstructionCount() {

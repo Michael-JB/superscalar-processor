@@ -48,6 +48,11 @@ public class Register {
     this.flag = flag;
   }
 
+  public void flush() {
+    flag = RegisterFlag.VALID;
+    reservingTag = Optional.empty();
+  }
+
   @Override
   public String toString() {
     return "r" + String.format("%-2d", id) + ": " + String.format("%4d", value) + " | " + String.format("%-7s", flag) + (reservingTag.isPresent() ? " | " + reservingTag.get() : "");

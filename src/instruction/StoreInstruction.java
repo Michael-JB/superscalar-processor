@@ -7,7 +7,7 @@ public class StoreInstruction extends Instruction {
   }
 
   @Override
-  public int eval() {
+  public int evaluate(DecodedOperand... operands) {
     return operands[1].getExecutionValue().get() + operands[2].getExecutionValue().get();
   }
 

@@ -12,6 +12,10 @@ public class Tag {
     return value;
   }
 
+  public boolean matches(Tag other) {
+    return other.getValue() == this.value;
+  }
+
   @Override
   public String toString() {
     return "t" + value;

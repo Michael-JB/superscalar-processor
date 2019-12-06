@@ -3,7 +3,7 @@ package unit;
 import java.util.Optional;
 
 import core.Processor;
-import instruction.Instruction;
+import instruction.DecodedInstruction;
 import instruction.InstructionStatus;
 import memory.Register;
 import memory.RegisterFlag;
@@ -15,14 +15,14 @@ public abstract class Unit {
   protected final ReservationStation reservationStation;
   protected int delayCounter = 0;
 
-  protected Optional<Instruction> inputInstruction = Optional.empty();
+  protected Optional<DecodedInstruction> inputInstruction = Optional.empty();
 
   public Unit(Processor processor) {
     this.processor = processor;
     this.reservationStation = new ReservationStation(processor, this);
   }
 
-  public void inputInstruction(Instruction instruction) {
+  public void inputInstruction(DecodedInstruction instruction) {
     inputInstruction = Optional.of(instruction);
   }
 
@@ -52,7 +52,7 @@ public abstract class Unit {
 
   private void completeCurrentInstruction() {
     if (hasInputInstruction()) {
-      Instruction completed = inputInstruction.get();
+      DecodedInstruction completed = inputInstruction.get();
       completed.setInstructionStatus(InstructionStatus.EXECUTED);
       inputInstruction = Optional.empty();
       System.out.println("EXECUTION COMPLETE: " + completed.toString());
@@ -61,9 +61,9 @@ public abstract class Unit {
 
       completed.getExecutionResult().ifPresent(result -> {
         completed.getDestinationRegister().ifPresent(reg -> {
-          Register register = processor.getRegisterFile().getRegister(reg.getValue());
+          Register register = processor.getRegisterFile().getRegister(reg.getEncodedOperand().getValue());
           processor.broadcastToReservationStations(completed.getTag(), result);
-          if (register.getReservingTag().isPresent() && register.getReservingTag().get().getValue() == completed.getTag().getValue()) {
+          if (register.getReservingTag().isPresent() && register.getReservingTag().get().matches(completed.getTag())) {
             register.setFlag(RegisterFlag.READY);
           }
         });
@@ -74,10 +74,16 @@ public abstract class Unit {
     }
   }
 
+  public void flush() {
+    inputInstruction = Optional.empty();
+    resetDelayCounter();
+    reservationStation.flush();
+  }
+
   public void tick() {
     if (hasInputInstruction()) {
       /* Get instruction from queue */
-      Instruction toExecute = inputInstruction.get();
+      DecodedInstruction toExecute = inputInstruction.get();
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
@@ -88,7 +94,7 @@ public abstract class Unit {
       /* Increment delay counter on each tick, until latency reached */
       incrementDelayCounter();
 
-      if (getDelayCounter() >= toExecute.getOpcode().getLatency()) {
+      if (getDelayCounter() >= toExecute.getInstruction().getOpcode().getLatency()) {
         /* Instruction has now been completed */
         process(toExecute);
         completeCurrentInstruction();
@@ -97,8 +103,8 @@ public abstract class Unit {
   }
 
   public String getStatus() {
-    return inputInstruction.isPresent() ? inputInstruction.get() + " (" + delayCounter + "/" + inputInstruction.get().getOpcode().getLatency() + ")" : "IDLE";
+    return inputInstruction.isPresent() ? inputInstruction.get() + " (" + delayCounter + "/" + inputInstruction.get().getInstruction().getOpcode().getLatency() + ")" : "IDLE";
   }
 
-  public abstract void process(Instruction instruction);
+  public abstract void process(DecodedInstruction instruction);
 }

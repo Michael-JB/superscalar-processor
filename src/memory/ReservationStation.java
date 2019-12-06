@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.Queue;
 
 import core.Processor;
-import instruction.Instruction;
-import instruction.RegisterOperand;
+import instruction.DecodedInstruction;
+import instruction.DecodedRegisterOperand;
 import instruction.Tag;
 import unit.Unit;
 
@@ -17,7 +17,7 @@ public class ReservationStation {
   private final Processor processor;
   private final Unit unit;
 
-  private Queue<Instruction> instructionBuffer = new LinkedList<Instruction>();
+  private Queue<DecodedInstruction> instructionBuffer = new LinkedList<DecodedInstruction>();
 
   public ReservationStation(Processor processor, Unit unit) {
     this.unit = unit;
@@ -43,9 +43,9 @@ public class ReservationStation {
   public void receive(Tag tag, int result) {
     instructionBuffer.forEach(instruction -> {
       if (!instruction.isReady()) {
-        List<RegisterOperand> sourceOperands = instruction.getSourceOperands();
-        sourceOperands.forEach(o -> {
-          if (o.getBlockingTag().isPresent() && o.getBlockingTag().get().getValue() == tag.getValue()) {
+        List<DecodedRegisterOperand> sourceRegisters = instruction.getSourceRegisters();
+        sourceRegisters.forEach(o -> {
+          if (o.getBlockingTag().isPresent() && o.getBlockingTag().get().matches(tag)) {
             o.setExecutionValue(result);
           }
         });
@@ -53,14 +53,14 @@ public class ReservationStation {
     });
   }
 
-  public boolean issue(Instruction instruction) {
+  public boolean issue(DecodedInstruction instruction) {
     if (!isFull()) {
-      instruction.getSourceOperands().forEach(o -> o.tryRetrieveValue(processor));
+      instruction.getSourceRegisters().forEach(o -> o.tryRetrieveValue(processor));
 
       /* Set register flag to INVALID */
-      Optional<RegisterOperand> destinationRegister = instruction.getDestinationRegister();
+      Optional<DecodedRegisterOperand> destinationRegister = instruction.getDestinationRegister();
       destinationRegister.ifPresent(d -> {
-        Register register = processor.getRegisterFile().getRegister(d.getValue());
+        Register register = processor.getRegisterFile().getRegister(d.getEncodedOperand().getValue());
         register.setFlag(RegisterFlag.INVALID);
         register.setReservingTag(instruction.getTag());
       });
@@ -73,11 +73,15 @@ public class ReservationStation {
 
   public void dispatch() {
     if (!instructionBuffer.isEmpty()) {
-      Instruction toDispatch = instructionBuffer.peek();
+      DecodedInstruction toDispatch = instructionBuffer.peek();
       if (toDispatch.isReady() && !unit.hasInputInstruction()) {
         unit.inputInstruction(instructionBuffer.poll());
       }
     }
+  }
+
+  public void flush() {
+    instructionBuffer.clear();
   }
 
   public String getStatus() {

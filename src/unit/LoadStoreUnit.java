@@ -1,53 +1,30 @@
 package unit;
 
 import core.Processor;
-import instruction.Instruction;
+import instruction.DecodedInstruction;
 import instruction.Opcode;
 
 public class LoadStoreUnit extends Unit {
 
-  private final int memoryCapacity;
-  private final int[] memory;
-
-  public LoadStoreUnit(Processor processor, int memoryCapacity) {
+  public LoadStoreUnit(Processor processor) {
     super(processor);
-    this.memoryCapacity = memoryCapacity;
-    this.memory = new int[memoryCapacity];
-  }
-
-  private boolean isInMemoryBounds(int address) {
-    return address >= 0 && address < memoryCapacity;
-  }
-
-  private int readFromMemory(int address) {
-    if (isInMemoryBounds(address)) {
-      return memory[address];
-    } else {
-      throw new ArrayIndexOutOfBoundsException("Memory address out of bounds: " + address);
-    }
-  }
-
-  private void storeToMemory(int address, int value) {
-    if (isInMemoryBounds(address)) {
-      memory[address] = value;
-    } else {
-      throw new ArrayIndexOutOfBoundsException("Memory address out of bounds: " + address);
-    }
   }
 
   @Override
-  public void process(Instruction instruction) {
-    Opcode opcode = instruction.getOpcode();
+  public void process(DecodedInstruction instruction) {
+    Opcode opcode = instruction.getInstruction().getOpcode();
 
     /* Execute instruction */
     int targetAddress = instruction.evaluate();
 
+
     if (opcode == Opcode.LA || opcode == Opcode.LAI) {
       /* Load  instructions */
-      instruction.setExecutionResult(readFromMemory(targetAddress));
+      instruction.setExecutionResult(processor.getMemory().readFromMemory(targetAddress));
     } else {
       /* Store instructions */
-      storeToMemory(targetAddress, instruction.getOperands()[0].getExecutionValue().get());
+      instruction.setExecutionResult(targetAddress);
+      // storeToMemory(targetAddress, instruction.getOperands()[0].getExecutionValue().get());
     }
   }
 

@@ -48,7 +48,7 @@ la r4 r3 0
 la r5 r2 0
 
 # Branch if arr[i-1] <= arr[i]
-ble r4 r5 3
+ble r4 r5 4
 
 # Swap arr[i] with arr[i-1], then increment swap counter
 sa r5 r3 0
@@ -57,10 +57,10 @@ addi r1 r1 1
 
 # Increment current index, branching if not at end of arr
 addi r2 r2 1
-bne r2 r0 -9
+bne r2 r0 -8
 
 # Branch if values were swapped in pass
-bgt r1 r6 -12
+bgt r1 r6 -11
 
 # Load arr back into the registers
 lai r0 0

@@ -7,7 +7,7 @@ public class JumpRegisterInstruction extends Instruction {
   }
 
   @Override
-  public int eval() {
+  public int evaluate(DecodedOperand... operands) {
     return operands[0].getExecutionValue().get();
   }
 

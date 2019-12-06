@@ -26,6 +26,10 @@ public class RegisterFile {
     return index >= 0 && index < capacity;
   }
 
+  public void flush() {
+    registers.forEach(Register::flush);
+  }
+
   public Register getRegister(int index) {
     if (isRegisterInFile(index)) {
       return registers.get(index);

@@ -1,7 +1,7 @@
 package unit;
 
 import core.Processor;
-import instruction.Instruction;
+import instruction.DecodedInstruction;
 
 public class ArithmeticLogicUnit extends Unit {
 
@@ -10,7 +10,7 @@ public class ArithmeticLogicUnit extends Unit {
   }
 
   @Override
-  public void process(Instruction instruction) {
+  public void process(DecodedInstruction instruction) {
     /* Execute instruction */
     int executionResult = instruction.evaluate();
     /* Update instruction result */
