@@ -102,6 +102,10 @@ public abstract class Unit {
     }
   }
 
+  public boolean isProcessing() {
+    return hasInputInstruction() || reservationStation.hasBufferedInstruction();
+  }
+
   public String getStatus() {
     return inputInstruction.isPresent() ? inputInstruction.get() + " (" + delayCounter + "/" + inputInstruction.get().getInstruction().getOpcode().getLatency() + ")" : "IDLE";
   }

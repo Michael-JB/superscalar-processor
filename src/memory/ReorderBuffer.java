@@ -82,6 +82,7 @@ public class ReorderBuffer {
         }
       });
 
+      processor.getTagGenerator().retireTag(toRetire.getDecodedInstruction().getTag());
       System.out.println("RETIRE INSTRUCTION: " + toRetire.getDecodedInstruction().toString());
       instructionsRetired++;
     }

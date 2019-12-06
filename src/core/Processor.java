@@ -83,12 +83,9 @@ public class Processor {
 
   private boolean isProcessing() {
     return !hasReachedProgramEnd() || !decodeBuffer.isEmpty() || reorderBuffer.hasEntries()
-      || arithmeticLogicUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
-      || loadStoreUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
-      || branchUnits.stream().anyMatch(u -> u.getReservationStation().hasBufferedInstruction())
-      || arithmeticLogicUnits.stream().anyMatch(u -> u.hasInputInstruction())
-      || loadStoreUnits.stream().anyMatch(u -> u.hasInputInstruction())
-      || branchUnits.stream().anyMatch(u -> u.hasInputInstruction());
+      || arithmeticLogicUnits.stream().anyMatch(Unit::isProcessing)
+      || loadStoreUnits.stream().anyMatch(Unit::isProcessing)
+      || branchUnits.stream().anyMatch(Unit::isProcessing);
   }
 
   public void pushToDecodeBuffer(FetchedInstruction instruction) {
@@ -119,6 +116,10 @@ public class Processor {
     return reorderBuffer;
   }
 
+  public TagGenerator getTagGenerator() {
+    return tagGenerator;
+  }
+
   private boolean hasReachedProgramEnd() {
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
@@ -130,6 +131,7 @@ public class Processor {
     registerFile.flush();
     reorderBuffer.flush();
     decodeBuffer.clear();
+    tagGenerator.flush();
   }
 
   private void tickUnits() {
@@ -140,7 +142,7 @@ public class Processor {
 
   private void fetch() {
     if (!hasReachedProgramEnd()) {
-      Instruction next = parsedProgram.getInstructions().get(getProgramCounter().getValue());
+      Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
       FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
       pushToDecodeBuffer(fetchedInstruction);
       getProgramCounter().setValue(getProgramCounter().getValue() + 1);

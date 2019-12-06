@@ -11,7 +11,7 @@ public class TagGenerator {
 
   public void retireTag(Tag tag) {
     if (assignedTagValues.contains(tag.getValue())) {
-      assignedTagValues.remove(tag.getValue());
+      assignedTagValues.remove(Integer.valueOf(tag.getValue()));
     }
   }
 
@@ -22,6 +22,10 @@ public class TagGenerator {
     }
     assignedTagValues.add(i);
     return new Tag(i);
+  }
+
+  public void flush() {
+    assignedTagValues.clear();
   }
 
 }

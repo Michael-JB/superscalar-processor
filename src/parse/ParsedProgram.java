@@ -36,6 +36,14 @@ public class ParsedProgram {
     return errorLine.isPresent();
   }
 
+  public Instruction getInstructionForLine(int line) {
+    if (line >= 0 && line < instructions.size()) {
+      return instructions.get(line);
+    } else {
+      throw new IllegalArgumentException("Line number out of program bounds");
+    }
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
