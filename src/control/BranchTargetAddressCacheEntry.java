@@ -6,23 +6,23 @@ public class BranchTargetAddressCacheEntry {
 
   private final int targetLine;
   private boolean predictedTaken = false;
-  private Optional<SaturatingCounter> saturatingCounter = Optional.empty();
+  private Optional<DynamicBranchMetric> dynamicBranchMetric = Optional.empty();
 
   public BranchTargetAddressCacheEntry(int targetLine) {
     this.targetLine = targetLine;
   }
 
-  public BranchTargetAddressCacheEntry(int targetLine, SaturatingCounter saturatingCounter) {
+  public BranchTargetAddressCacheEntry(int targetLine, DynamicBranchMetric branchMetric) {
     this.targetLine = targetLine;
-    this.saturatingCounter = Optional.of(saturatingCounter);
+    this.dynamicBranchMetric = Optional.of(branchMetric);
   }
 
   public void alertBranchRetired(boolean branchTaken) {
-    saturatingCounter.ifPresent(counter -> counter.updateCounter(branchTaken));
+    dynamicBranchMetric.ifPresent(metric -> metric.update(branchTaken));
   }
 
-  public Optional<SaturatingCounter> getSaturatingCounter() {
-    return saturatingCounter;
+  public Optional<DynamicBranchMetric> getDynamicBranchMetric() {
+    return dynamicBranchMetric;
   }
 
   public int getTargetLine() {
@@ -39,7 +39,9 @@ public class BranchTargetAddressCacheEntry {
 
   @Override
   public String toString() {
-    return "Target: " + targetLine + " | Prediction: " + (predictedTaken ? "Taken" : "Not taken") + (saturatingCounter.isPresent() ? " " + saturatingCounter.get().toString() : "");
+    return "Target: " + targetLine
+      + " | Prediction: " + (predictedTaken ? "Taken" : "Not taken")
+      + (dynamicBranchMetric.isPresent() ? " " + dynamicBranchMetric.get().toString() : "");
   }
 
 }

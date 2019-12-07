@@ -3,7 +3,6 @@ package memory;
 import java.util.LinkedList;
 import java.util.Optional;
 
-import control.BranchTargetAddressCacheEntry;
 import core.Processor;
 import instruction.DecodedRegisterOperand;
 import instruction.Opcode;
@@ -76,8 +75,7 @@ public class ReorderBuffer {
         if (retiringOpcode.getCategory().equals(OpcodeCategory.CONTROL)
           && toRetire.getDecodedInstruction().getBranchTarget().isPresent()) {
           toRetire.getDecodedInstruction().getBranchTaken().ifPresent(taken -> {
-            Optional<BranchTargetAddressCacheEntry> entry = processor.getBranchTargetAddressCache().getEntryForLine(toRetire.getDecodedInstruction().getLineNumber());
-            entry.ifPresent(e -> {
+            processor.getBranchPredictor().getBranchTargetAddressCache().getEntryForLine(toRetire.getDecodedInstruction().getLineNumber()).ifPresent(e -> {
               if (e.getPredictedTaken() == taken) {
                 processor.incrementCorrectBranchPredictions();
               } else {

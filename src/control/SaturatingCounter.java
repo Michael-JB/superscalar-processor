@@ -1,6 +1,6 @@
 package control;
 
-public class SaturatingCounter {
+public class SaturatingCounter extends DynamicBranchMetric {
 
   private final int bitCount;
   private final int minimum = 0, maximum, threshold;
@@ -27,7 +27,7 @@ public class SaturatingCounter {
     return counter >= threshold;
   }
 
-  public void updateCounter(boolean branchTaken) {
+  public void update(boolean branchTaken) {
     if (branchTaken) {
       counter = Math.min(counter + 1, maximum);
     } else {

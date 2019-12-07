@@ -1,10 +1,7 @@
 package unit;
 
-import java.util.Arrays;
-
 import core.Processor;
 import instruction.DecodedInstruction;
-import instruction.DecodedValueOperand;
 import instruction.Opcode;
 
 public class BranchUnit extends Unit {

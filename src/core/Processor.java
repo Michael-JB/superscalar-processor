@@ -6,9 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import control.BranchTargetAddressCache;
-import control.DynamicBranchPredictor;
-import control.StaticBranchPredictor;
+import control.BranchPredictor;
+import control.BranchPredictorType;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
 import instruction.FetchedInstruction;
@@ -49,14 +48,11 @@ public class Processor {
   private final Queue<FetchedInstruction> decodeBuffer = new LinkedList<FetchedInstruction>();
   private final TagGenerator tagGenerator = new TagGenerator();
   private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
-
-  private final BranchTargetAddressCache branchTargetAddressCache = new BranchTargetAddressCache();
-  private final StaticBranchPredictor staticBranchPredictor = new StaticBranchPredictor(branchTargetAddressCache);
-  private final DynamicBranchPredictor dynamicBranchPredictor = new DynamicBranchPredictor(branchTargetAddressCache, 3);
+  private final BranchPredictorType branchPredictorType;
 
   private int cycleCount = 0, executedInstructionCount = 0, correctBranchPredictions = 0, incorrectBranchPredictions = 0;
 
-  public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity) {
+  public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity, BranchPredictorType branchPredictorType) {
     this.parsedProgram = parsedProgram;
     this.width = width;
     this.registerFile = new RegisterFile(registerFileCapacity);
@@ -72,6 +68,7 @@ public class Processor {
     }
     this.programCounterRegister = new Register(registerFileCapacity);
     this.programCounterRegister.setValue(0);
+    this.branchPredictorType = branchPredictorType;
   }
 
   public void run() {
@@ -96,8 +93,8 @@ public class Processor {
       || branchUnits.stream().anyMatch(Unit::isProcessing);
   }
 
-  public BranchTargetAddressCache getBranchTargetAddressCache() {
-    return branchTargetAddressCache;
+  public BranchPredictor getBranchPredictor() {
+    return branchPredictorType.getBranchPredictor();
   }
 
   public void pushToDecodeBuffer(FetchedInstruction instruction) {
@@ -169,8 +166,7 @@ public class Processor {
       Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
       FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
       pushToDecodeBuffer(fetchedInstruction);
-      // int nextLine = staticBranchPredictor.predict(fetchedInstruction);
-      int nextLine = dynamicBranchPredictor.predict(fetchedInstruction);
+      int nextLine = getBranchPredictor().predict(fetchedInstruction);
       getProgramCounter().setValue(nextLine);
       System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
     }
@@ -235,7 +231,7 @@ public class Processor {
     System.out.println();
 
     System.out.println("Branch Target Address Cache:");
-    System.out.print(branchTargetAddressCache.toString());
+    System.out.print(getBranchPredictor().getBranchTargetAddressCache().toString());
     System.out.println();
 
     System.out.println("Reservation Stations:");

@@ -1,55 +1,34 @@
 package control;
 
-import java.util.Arrays;
-import java.util.Optional;
-
 import instruction.FetchedInstruction;
-import instruction.Opcode;
-import instruction.OpcodeCategory;
 import instruction.ValueOperand;
 
-public class StaticBranchPredictor {
+public class StaticBranchPredictor extends BranchPredictor {
 
-  private final BranchTargetAddressCache branchTargetAddressCache;
-
-  public StaticBranchPredictor(BranchTargetAddressCache branchTargetAddressCache) {
-    this.branchTargetAddressCache = branchTargetAddressCache;
-  }
-
-  public int predict(FetchedInstruction fetchedInstruction) {
-    Opcode opcode = fetchedInstruction.getInstruction().getOpcode();
-    int targetLine = fetchedInstruction.getLineNumber() + 1;
-    int predictedLine = targetLine;
-    boolean predictTake = false;
-    if (opcode.getCategory().equals(OpcodeCategory.CONTROL)) {
-      Optional<ValueOperand> valueOperand = Arrays.stream(fetchedInstruction.getInstruction().getOperands())
-        .filter(o -> o instanceof ValueOperand)
-        .map(o -> (ValueOperand) o)
-        .findAny();
-
-      if (valueOperand.isPresent()) {
-        if (opcode == Opcode.JMP) {
-          targetLine = valueOperand.get().getValue();
-          predictedLine = targetLine;
-          predictTake = true;
-        } else {
-          targetLine = fetchedInstruction.getLineNumber() + valueOperand.get().getValue();
-          if (valueOperand.get().getValue() < 0) {
-            predictedLine = targetLine;
-            predictTake = true;
-          }
-        }
-      }
-      BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(targetLine);
-      entry.setPredictedTaken(predictTake);
-      branchTargetAddressCache.addEntry(fetchedInstruction.getLineNumber(), entry);
-    }
-    return predictedLine;
+  private boolean shouldTakeBranch(int targetLine, int instructionLine) {
+    return targetLine < instructionLine;
   }
 
   @Override
-  public String toString() {
-    return "hi";
+  protected int predictBranchInstruction(FetchedInstruction fetchedBranchInstruction, ValueOperand deltaOperand) {
+    int nextLine = fetchedBranchInstruction.getLineNumber() + 1;
+    int predictedLine = nextLine;
+    boolean predictTake = true;
+
+    if (getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).isPresent()) {
+      BranchTargetAddressCacheEntry entry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).get();
+      predictTake = shouldTakeBranch(entry.getTargetLine(), fetchedBranchInstruction.getLineNumber());
+      predictedLine = predictTake ? entry.getTargetLine() : nextLine;
+      entry.setPredictedTaken(predictTake);
+    } else {
+      int targetLine = fetchedBranchInstruction.getLineNumber() + deltaOperand.getValue();
+      predictTake = shouldTakeBranch(targetLine, fetchedBranchInstruction.getLineNumber());
+      predictedLine = predictTake ? targetLine : nextLine;
+      BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(targetLine);
+      entry.setPredictedTaken(predictTake);
+      getBranchTargetAddressCache().addEntry(fetchedBranchInstruction.getLineNumber(), entry);
+    }
+    return predictedLine;
   }
 
 }

@@ -3,6 +3,7 @@ package core;
 import java.io.File;
 import java.util.Scanner;
 
+import control.BranchPredictorType;
 import parse.Assembler;
 import parse.ParsedProgram;
 
@@ -41,7 +42,7 @@ public class Main {
     log("PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, 4, 16, 32);
+      Processor processor = new Processor(parsedProgram, 4, 16, 32, BranchPredictorType.TWO_LEVEL_ADAPTIVE);
 
       if (interactiveMode) {
         Scanner scanner = new Scanner(System.in);
