@@ -89,6 +89,7 @@ public class ReorderBuffer {
                   programCounterRegister.setValue(toRetire.getDecodedInstruction().getLineNumber() + 1);
                 }
               }
+              e.alertBranchRetired(taken);
             });
           });
         }

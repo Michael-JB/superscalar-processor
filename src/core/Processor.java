@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Queue;
 
 import control.BranchTargetAddressCache;
+import control.DynamicBranchPredictor;
 import control.StaticBranchPredictor;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
@@ -51,6 +52,7 @@ public class Processor {
 
   private final BranchTargetAddressCache branchTargetAddressCache = new BranchTargetAddressCache();
   private final StaticBranchPredictor staticBranchPredictor = new StaticBranchPredictor(branchTargetAddressCache);
+  private final DynamicBranchPredictor dynamicBranchPredictor = new DynamicBranchPredictor(branchTargetAddressCache, 3);
 
   private int cycleCount = 0, executedInstructionCount = 0, correctBranchPredictions = 0, incorrectBranchPredictions = 0;
 
@@ -167,7 +169,8 @@ public class Processor {
       Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
       FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
       pushToDecodeBuffer(fetchedInstruction);
-      int nextLine = staticBranchPredictor.predict(fetchedInstruction);
+      // int nextLine = staticBranchPredictor.predict(fetchedInstruction);
+      int nextLine = dynamicBranchPredictor.predict(fetchedInstruction);
       getProgramCounter().setValue(nextLine);
       System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
     }
