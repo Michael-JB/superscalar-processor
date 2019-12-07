@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Queue;
 
 import control.BranchTargetAddressCache;
+import control.StaticBranchPredictor;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
 import instruction.FetchedInstruction;
@@ -49,8 +50,9 @@ public class Processor {
   private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
 
   private final BranchTargetAddressCache branchTargetAddressCache = new BranchTargetAddressCache();
+  private final StaticBranchPredictor staticBranchPredictor = new StaticBranchPredictor(branchTargetAddressCache);
 
-  private int cycleCount = 0, executedInstructionCount = 0;
+  private int cycleCount = 0, executedInstructionCount = 0, correctBranchPredictions = 0, incorrectBranchPredictions = 0;
 
   public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity) {
     this.parsedProgram = parsedProgram;
@@ -120,6 +122,14 @@ public class Processor {
     return executedInstructionCount;
   }
 
+  public int getCorrectBranchPredictionCount() {
+    return correctBranchPredictions;
+  }
+
+  public int getIncorrectBranchPredictionCount() {
+    return incorrectBranchPredictions;
+  }
+
   public RegisterFile getRegisterFile() {
     return registerFile;
   }
@@ -157,7 +167,8 @@ public class Processor {
       Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
       FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
       pushToDecodeBuffer(fetchedInstruction);
-      getProgramCounter().setValue(getProgramCounter().getValue() + 1);
+      int nextLine = staticBranchPredictor.predict(fetchedInstruction);
+      getProgramCounter().setValue(nextLine);
       System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
     }
   }
@@ -252,6 +263,14 @@ public class Processor {
 
   public void incrementExecutedInstructionCount() {
     executedInstructionCount++;
+  }
+
+  public void incrementCorrectBranchPredictions() {
+    correctBranchPredictions++;
+  }
+
+  public void incrementIncorrectBranchPredictions() {
+    incorrectBranchPredictions++;
   }
 
   private void execute() {

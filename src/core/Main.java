@@ -66,13 +66,19 @@ public class Main {
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();
       int cycles = processor.getCycleCount();
+      int correctBranchPredictions = processor.getCorrectBranchPredictionCount();
+      int incorrectBranchPredictions = processor.getIncorrectBranchPredictionCount();
       float cyclesPerInstruction = (float) cycles / (float) executedInstructionCount;
       float instructionsPerCycle = (float) executedInstructionCount / (float) cycles;
+      float correctBranchPredictionRate = (float) (100 * correctBranchPredictions) / (incorrectBranchPredictions + correctBranchPredictions);
 
       log("ANALYTICS START");
       System.out.println("Program instructions: " + instructionCount);
       System.out.println("Executed instructions: " + executedInstructionCount);
       System.out.println("Cycles taken: " + cycles);
+      System.out.println("Branches correctly predicted: " + correctBranchPredictions);
+      System.out.println("Branches incorrectly predicted: " + incorrectBranchPredictions);
+      System.out.println("Correct branch prediction rate: " +  String.format("%.1f", correctBranchPredictionRate) + "%");
       System.out.println("Cycles per instruction: " + String.format("%.2f", cyclesPerInstruction));
       System.out.println("Instructions per cycle: " +  String.format("%.2f", instructionsPerCycle));
       log("ANALYTICS END");

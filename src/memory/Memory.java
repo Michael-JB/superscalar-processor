@@ -35,8 +35,12 @@ public class Memory {
   public String toString(int entriesToShow) {
     int entryCount = Math.min(entriesToShow, memoryCapacity);
     StringBuilder sb = new StringBuilder();
+    sb.append("(Showing " + entryCount + " entries of " + memoryCapacity + ")" + System.lineSeparator());
     for (int i = 0; i < entryCount; i++) {
       sb.append("[" + String.format("%-" + String.valueOf(entriesToShow - 1).length() + "d", i) + "]: " + memory[i] + System.lineSeparator());
+    }
+    if (entriesToShow < memoryCapacity) {
+      sb.append("..." + System.lineSeparator());
     }
     return sb.toString();
   }

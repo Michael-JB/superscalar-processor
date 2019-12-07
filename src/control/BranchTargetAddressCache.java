@@ -1,6 +1,7 @@
 package control;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 public class BranchTargetAddressCache {
 
@@ -9,9 +10,14 @@ public class BranchTargetAddressCache {
   public BranchTargetAddressCache() {}
 
   public void addEntry(int lineNumber, BranchTargetAddressCacheEntry entry) {
-    if (!branchTargetAddressCache.containsKey(lineNumber)) {
-      branchTargetAddressCache.put(lineNumber, entry);
+    branchTargetAddressCache.put(lineNumber, entry);
+  }
+
+  public Optional<BranchTargetAddressCacheEntry> getEntryForLine(int line) {
+    if (branchTargetAddressCache.containsKey(line)) {
+      return Optional.of(branchTargetAddressCache.get(line));
     }
+    return Optional.empty();
   }
 
   @Override

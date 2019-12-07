@@ -76,13 +76,20 @@ public class ReorderBuffer {
         if (retiringOpcode.getCategory().equals(OpcodeCategory.CONTROL)
           && toRetire.getDecodedInstruction().getBranchTarget().isPresent()) {
           toRetire.getDecodedInstruction().getBranchTaken().ifPresent(taken -> {
-            if (taken) {
-              programCounterRegister.setValue(toRetire.getDecodedInstruction().getBranchTarget().get());
-              processor.flushPipeline();
-            }
-            BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(
-              toRetire.getDecodedInstruction().getBranchTarget().get());
-            processor.getBranchTargetAddressCache().addEntry(toRetire.getDecodedInstruction().getLineNumber(), entry);
+            Optional<BranchTargetAddressCacheEntry> entry = processor.getBranchTargetAddressCache().getEntryForLine(toRetire.getDecodedInstruction().getLineNumber());
+            entry.ifPresent(e -> {
+              if (e.getPredictedTaken() == taken) {
+                processor.incrementCorrectBranchPredictions();
+              } else {
+                processor.incrementIncorrectBranchPredictions();
+                processor.flushPipeline();
+                if (taken) {
+                  programCounterRegister.setValue(toRetire.getDecodedInstruction().getBranchTarget().get());
+                } else {
+                  programCounterRegister.setValue(toRetire.getDecodedInstruction().getLineNumber() + 1);
+                }
+              }
+            });
           });
         }
 
