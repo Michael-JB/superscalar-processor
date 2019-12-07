@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Queue;
 
 import control.BranchPredictor;
-import control.BranchPredictorType;
 import control.RuntimeError;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
@@ -31,47 +30,42 @@ import unit.UnitLoadComparator;
 
 public class Processor {
 
-  private final int REORDER_BUFFER_CAPACITY = 16;
-  private final int LOAD_STORE_BUFFER_CAPACITY = 16;
-  private final int RESERVATION_STATION_CAPACITIES = 4;
-  private final int ALU_COUNT = 2; // Arithmetic Logic units
-  private final int BU_COUNT = 1; // Branch units
-  private final int LSU_Count = 2; // Load store units
-
   private final ParsedProgram parsedProgram;
-  private final int width;
+  private final ProcessorConfiguration processorConfiguration;
   private final Memory memory;
   private final RegisterFile registerFile;
   private final Register programCounterRegister;
+  private final ReorderBuffer reorderBuffer;
+  private final BranchPredictor branchPredictor;
+
   private final List<BranchUnit> branchUnits = new ArrayList<BranchUnit>();
   private final List<ArithmeticLogicUnit> arithmeticLogicUnits = new ArrayList<ArithmeticLogicUnit>();
   private final List<LoadStoreUnit> loadStoreUnits = new ArrayList<LoadStoreUnit>();
-  private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
+
   private final Queue<FetchedInstruction> decodeBuffer = new LinkedList<FetchedInstruction>();
+
+  private final UnitLoadComparator unitLoadComparator = new UnitLoadComparator();
   private final TagGenerator tagGenerator = new TagGenerator();
-  private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
-  private final BranchPredictorType branchPredictorType;
 
   private Optional<RuntimeError> runtimeError = Optional.empty();
   private int cycleCount = 0, executedInstructionCount = 0, correctBranchPredictions = 0, incorrectBranchPredictions = 0;
 
-  public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity, BranchPredictorType branchPredictorType) {
+  public Processor(ParsedProgram parsedProgram, ProcessorConfiguration processorConfiguration) {
     this.parsedProgram = parsedProgram;
-    this.width = width;
-    this.registerFile = new RegisterFile(registerFileCapacity);
-    this.memory = new Memory(memoryCapacity);
-    for (int i = 0; i < ALU_COUNT; i++) {
-      arithmeticLogicUnits.add(new ArithmeticLogicUnit(this, RESERVATION_STATION_CAPACITIES));
-    }
-    for (int i = 0; i < BU_COUNT; i++) {
-      branchUnits.add(new BranchUnit(this, RESERVATION_STATION_CAPACITIES));
-    }
-    for (int i = 0; i < LSU_Count; i++) {
-      loadStoreUnits.add(new LoadStoreUnit(this, RESERVATION_STATION_CAPACITIES));
-    }
-    this.programCounterRegister = new Register(registerFileCapacity);
+    this.processorConfiguration = processorConfiguration;
+    this.registerFile = new RegisterFile(processorConfiguration.getRegisterFileCapacity());
+    this.memory = new Memory(processorConfiguration.getMemoryCapacity());
+    this.reorderBuffer = new ReorderBuffer(this, processorConfiguration.getReorderBufferCapacity(), processorConfiguration.getLoadStoreBufferCapacity());
+    this.branchPredictor = processorConfiguration.getBranchPredictorType().getBranchPredictor();
+    this.programCounterRegister = new Register(processorConfiguration.getRegisterFileCapacity());
     this.programCounterRegister.setValue(0);
-    this.branchPredictorType = branchPredictorType;
+
+    for (int i = 0; i < processorConfiguration.getALUCount(); i++)
+      arithmeticLogicUnits.add(new ArithmeticLogicUnit(this, processorConfiguration.getReservationStationCapacities()));
+    for (int i = 0; i < processorConfiguration.getBUCount(); i++)
+      branchUnits.add(new BranchUnit(this, processorConfiguration.getReservationStationCapacities()));
+    for (int i = 0; i < processorConfiguration.getLSUCount(); i++)
+      loadStoreUnits.add(new LoadStoreUnit(this, processorConfiguration.getReservationStationCapacities()));
   }
 
   public void run() {
@@ -97,15 +91,15 @@ public class Processor {
   }
 
   public BranchPredictor getBranchPredictor() {
-    return branchPredictorType.getBranchPredictor();
+    return branchPredictor;
   }
 
   public void pushToDecodeBuffer(FetchedInstruction instruction) {
     decodeBuffer.offer(instruction);
   }
 
-  public int getWidth() {
-    return width;
+  public ProcessorConfiguration getProcessorConfiguration() {
+    return processorConfiguration;
   }
 
   public Memory getMemory() {
@@ -299,9 +293,9 @@ public class Processor {
   public void tick() {
     writeback();
     execute();
-    for (int i = 0; i < width; i++)
+    for (int i = 0; i < processorConfiguration.getWidth(); i++)
       decode();
-    for (int i = 0; i < width; i++)
+    for (int i = 0; i < processorConfiguration.getWidth(); i++)
       fetch();
 
     cycleCount++;

@@ -55,7 +55,7 @@ public class ReorderBuffer {
 
   public void retire() {
     int instructionsRetired = 0;
-    while (hasEntries() && reorderBuffer.peekFirst().isComplete() && instructionsRetired < processor.getWidth()) {
+    while (hasEntries() && reorderBuffer.peekFirst().isComplete() && instructionsRetired < processor.getProcessorConfiguration().getWidth()) {
 
       ReorderBufferEntry toRetire = reorderBuffer.pollFirst();
       toRetire.getDecodedInstruction().getExecutionResult().ifPresent(result -> {

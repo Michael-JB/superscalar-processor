@@ -45,9 +45,9 @@ public class ReservationStation {
   public boolean isMemoryReady(DecodedInstruction instruction) {
     if (instruction.getInstruction().getOpcode().getCategory().equals(OpcodeCategory.MEMORY)) {
       if (instruction.isReady()) {
-        Opcode opcode = instruction.getInstruction().getOpcode();
-        return !processor.getReorderBuffer().getLoadStoreBuffer().previousMemoryAccessExistsForInstruction(instruction,
-          (opcode.equals(Opcode.LA) || opcode.equals(Opcode.LAI)));
+        // Opcode opcode = instruction.getInstruction().getOpcode();
+        return !processor.getReorderBuffer().getLoadStoreBuffer().previousMemoryAccessExistsForInstruction(instruction, true);
+          // (opcode.equals(Opcode.LA) || opcode.equals(Opcode.LAI)));
       }
       return false;
     }
@@ -74,6 +74,12 @@ public class ReservationStation {
   public boolean issue(DecodedInstruction instruction) {
     if (!isFull()) {
       instruction.getSourceRegisters().forEach(o -> o.tryRetrieveValue(processor));
+
+      // if (instruction.getInstruction().getOpcode().equals(Opcode.LA) || instruction.getInstruction().getOpcode().equals(Opcode.LAI)) {
+      //   if (processor.getReorderBuffer().getLoadStoreBuffer().loadStoreForward(instruction).isPresent()) {
+      //    // TODO: Load-Store forwarding. Here?
+      //   }
+      // }
 
       /* Bypass if instruction is already ready */
       if (canDispatch(instruction) && instructionBuffer.isEmpty()) {

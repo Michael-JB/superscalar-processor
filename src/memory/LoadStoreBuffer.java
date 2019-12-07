@@ -38,6 +38,32 @@ public class LoadStoreBuffer {
     }
   }
 
+  public Optional<Integer> loadStoreForward(DecodedInstruction loadInstruction) {
+    if (loadStoreBuffer.contains(loadInstruction) && loadInstruction.isReady()) {
+      if (loadInstruction.evaluate().isPresent()) {
+        int targetAddress = loadInstruction.evaluate().get();
+        int index = loadStoreBuffer.indexOf(loadInstruction);
+        for (int i = index - 1; i >= 0; i--) {
+          DecodedInstruction previous = loadStoreBuffer.get(i);
+          Opcode previousOpcode = previous.getInstruction().getOpcode();
+          if (previousOpcode.equals(Opcode.SA) || previousOpcode.equals(Opcode.SAI)) {
+            if (previous.isReady()) {
+              Optional<Integer> previousAddress = previous.evaluate();
+              if (previousAddress.isPresent() && previousAddress.get() == targetAddress) {
+                return Optional.of(previous.getOperands()[0].getExecutionValue().get());
+              }
+            } else {
+              return Optional.empty();
+            }
+          }
+        }
+      }
+    } else {
+      throw new IllegalArgumentException("Cannot check previous stores for unready/unscheduled instruction");
+    }
+    return Optional.empty();
+  }
+
   public boolean previousMemoryAccessExistsForInstruction(DecodedInstruction instruction, boolean storeOnly) {
     if (loadStoreBuffer.contains(instruction) && instruction.isReady()) {
       if (instruction.evaluate().isPresent()) {
