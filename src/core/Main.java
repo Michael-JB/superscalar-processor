@@ -37,7 +37,7 @@ public class Main {
 
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
-    ProcessorConfiguration processorConfiguration = new ProcessorConfiguration(4, 2, 1, 2, 32, 32, 4, 16, 128, BranchPredictorType.TWO_LEVEL_ADAPTIVE);
+    ProcessorConfiguration processorConfiguration = new ProcessorConfiguration(4, 2, 1, 2, 32, 32, 4, 16, 128, BranchPredictorType.TWO_BIT_TWO_LEVEL_ADAPTIVE);
 
     log("PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
