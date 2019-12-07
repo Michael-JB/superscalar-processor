@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class MultiplyInstruction extends Instruction {
 
   public MultiplyInstruction(RegisterOperand dest, RegisterOperand srcA, RegisterOperand srcB) {
@@ -7,8 +9,8 @@ public class MultiplyInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return operands[1].getExecutionValue().get() * operands[2].getExecutionValue().get();
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    return Optional.of(operands[1].getExecutionValue().get() * operands[2].getExecutionValue().get());
   }
 
 }

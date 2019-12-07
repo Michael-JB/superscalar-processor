@@ -12,7 +12,7 @@ public class Memory {
     this.memory = new int[memoryCapacity];
   }
 
-  private boolean isInMemoryBounds(int address) {
+  public boolean isInMemoryBounds(int address) {
     return address >= 0 && address < memoryCapacity;
   }
 

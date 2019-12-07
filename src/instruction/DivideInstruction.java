@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class DivideInstruction extends Instruction {
 
   public DivideInstruction(RegisterOperand dest, RegisterOperand srcA, RegisterOperand srcB) {
@@ -7,8 +9,11 @@ public class DivideInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return operands[1].getExecutionValue().get() / operands[2].getExecutionValue().get();
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    if (operands[2].getExecutionValue().get() != 0) {
+      return Optional.of(operands[1].getExecutionValue().get() / operands[2].getExecutionValue().get());
+    }
+    return Optional.empty();
   }
 
 }

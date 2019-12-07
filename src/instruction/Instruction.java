@@ -1,6 +1,7 @@
 package instruction;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class Instruction {
@@ -18,7 +19,6 @@ public abstract class Instruction {
     }
   }
 
-
   public Opcode getOpcode() {
     return opcode;
   }
@@ -27,7 +27,7 @@ public abstract class Instruction {
     return operands;
   }
 
-  protected abstract int evaluate(DecodedOperand... operands);
+  protected abstract Optional<Integer> evaluate(DecodedOperand... operands);
 
   @Override
   public String toString() {

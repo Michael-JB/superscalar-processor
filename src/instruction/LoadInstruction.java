@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class LoadInstruction extends Instruction {
 
   public LoadInstruction(RegisterOperand dest, RegisterOperand base, ValueOperand off) {
@@ -7,8 +9,8 @@ public class LoadInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return operands[1].getExecutionValue().get() + operands[2].getExecutionValue().get();
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    return Optional.of(operands[1].getExecutionValue().get() + operands[2].getExecutionValue().get());
   }
 
 }

@@ -1,9 +1,11 @@
 package memory;
 
 import java.util.LinkedList;
+import java.util.Optional;
 
 import instruction.DecodedInstruction;
 import instruction.Opcode;
+import instruction.OpcodeCategory;
 
 public class LoadStoreBuffer {
 
@@ -36,21 +38,24 @@ public class LoadStoreBuffer {
     }
   }
 
-  public boolean previousStoreExistsForInstruction(DecodedInstruction instruction) {
+  public boolean previousMemoryAccessExistsForInstruction(DecodedInstruction instruction, boolean storeOnly) {
     if (loadStoreBuffer.contains(instruction) && instruction.isReady()) {
-      int targetAddress = instruction.evaluate();
-      int index = loadStoreBuffer.indexOf(instruction);
-      for (int i = 0; i < index; i++) {
-        DecodedInstruction previous = loadStoreBuffer.get(i);
-        Opcode previousOpcode = previous.getInstruction().getOpcode();
-        if (previousOpcode.equals(Opcode.SA) || previousOpcode.equals(Opcode.SAI)) {
-          if (previous.isReady()) {
-            int previousAddress = previous.evaluate();
-            if (previousAddress == targetAddress) {
+      if (instruction.evaluate().isPresent()) {
+        int targetAddress = instruction.evaluate().get();
+        int index = loadStoreBuffer.indexOf(instruction);
+        for (int i = 0; i < index; i++) {
+          DecodedInstruction previous = loadStoreBuffer.get(i);
+          Opcode previousOpcode = previous.getInstruction().getOpcode();
+          if ((!storeOnly && previousOpcode.getCategory().equals(OpcodeCategory.MEMORY))
+            || (storeOnly && (previousOpcode.equals(Opcode.SA) || previousOpcode.equals(Opcode.SAI)))) {
+            if (previous.isReady()) {
+              Optional<Integer> previousAddress = previous.evaluate();
+              if (previousAddress.isPresent() && previousAddress.get() == targetAddress) {
+                return true;
+              }
+            } else {
               return true;
             }
-          } else {
-            return true;
           }
         }
       }

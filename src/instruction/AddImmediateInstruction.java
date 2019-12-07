@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class AddImmediateInstruction extends Instruction {
 
   public AddImmediateInstruction(RegisterOperand dest, RegisterOperand src, ValueOperand val) {
@@ -7,8 +9,8 @@ public class AddImmediateInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return operands[1].getExecutionValue().get() + operands[2].getExecutionValue().get();
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    return Optional.of(operands[1].getExecutionValue().get() + operands[2].getExecutionValue().get());
   }
 
 }

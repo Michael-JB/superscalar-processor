@@ -1,5 +1,8 @@
 package unit;
 
+import java.util.Optional;
+
+import control.LoadStoreError;
 import core.Processor;
 import instruction.DecodedInstruction;
 import instruction.Opcode;
@@ -15,14 +18,18 @@ public class LoadStoreUnit extends Unit {
     Opcode opcode = instruction.getInstruction().getOpcode();
 
     /* Execute instruction */
-    int targetAddress = instruction.evaluate();
-
-    if (opcode == Opcode.LA || opcode == Opcode.LAI) {
-      /* Load  instructions */
-      instruction.setExecutionResult(processor.getMemory().readFromMemory(targetAddress));
+    Optional<Integer> targetAddress = instruction.evaluate();
+    if (targetAddress.isPresent() && processor.getMemory().isInMemoryBounds(targetAddress.get())) {
+      /* Update instruction result */
+      if (opcode == Opcode.LA || opcode == Opcode.LAI) {
+        /* Load  instructions */
+        instruction.setExecutionResult(processor.getMemory().readFromMemory(targetAddress.get()));
+      } else {
+        /* Store instructions */
+        instruction.setExecutionResult(targetAddress.get());
+      }
     } else {
-      /* Store instructions */
-      instruction.setExecutionResult(targetAddress);
+      instruction.raiseRuntimeError(new LoadStoreError("Cannot execute " + instruction.getInstruction().toString()));
     }
   }
 

@@ -1,5 +1,8 @@
 package unit;
 
+import java.util.Optional;
+
+import control.ArithmeticError;
 import core.Processor;
 import instruction.DecodedInstruction;
 
@@ -12,9 +15,13 @@ public class ArithmeticLogicUnit extends Unit {
   @Override
   public void process(DecodedInstruction instruction) {
     /* Execute instruction */
-    int executionResult = instruction.evaluate();
-    /* Update instruction result */
-    instruction.setExecutionResult(executionResult);
+    Optional<Integer> executionResult = instruction.evaluate();
+    if (executionResult.isPresent()) {
+      /* Update instruction result */
+      instruction.setExecutionResult(executionResult.get());
+    } else {
+      instruction.raiseRuntimeError(new ArithmeticError("Cannot execute " + instruction.getInstruction().toString()));
+    }
   }
 
   @Override

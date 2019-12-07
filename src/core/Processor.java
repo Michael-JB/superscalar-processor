@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 
 import control.BranchPredictor;
 import control.BranchPredictorType;
+import control.RuntimeError;
 import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
 import instruction.FetchedInstruction;
@@ -50,6 +52,7 @@ public class Processor {
   private final ReorderBuffer reorderBuffer = new ReorderBuffer(this, REORDER_BUFFER_CAPACITY, LOAD_STORE_BUFFER_CAPACITY);
   private final BranchPredictorType branchPredictorType;
 
+  private Optional<RuntimeError> runtimeError = Optional.empty();
   private int cycleCount = 0, executedInstructionCount = 0, correctBranchPredictions = 0, incorrectBranchPredictions = 0;
 
   public Processor(ParsedProgram parsedProgram, int width, int registerFileCapacity, int memoryCapacity, BranchPredictorType branchPredictorType) {
@@ -72,13 +75,13 @@ public class Processor {
   }
 
   public void run() {
-    while(isProcessing()) {
+    while(!hasRuntimeError() && isProcessing()) {
       tick();
     }
   }
 
   public boolean step() {
-    if (isProcessing()) {
+    if (!hasRuntimeError() && isProcessing()) {
       tick();
       return true;
     }
@@ -145,6 +148,19 @@ public class Processor {
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
 
+  public Optional<RuntimeError> getRuntimeError() {
+    return runtimeError;
+  }
+
+  public boolean hasRuntimeError() {
+    return runtimeError.isPresent();
+  }
+
+  public void raiseRuntimeError(RuntimeError runtimeError) {
+    System.out.println("RUNTIME ERROR: " + runtimeError.toString());
+    this.runtimeError = Optional.of(runtimeError);
+  }
+
   public void flushPipeline() {
     arithmeticLogicUnits.forEach(Unit::flush);
     loadStoreUnits.forEach(Unit::flush);
@@ -161,17 +177,6 @@ public class Processor {
     branchUnits.forEach(Unit::tick);
   }
 
-  private void fetch() {
-    if (!hasReachedProgramEnd()) {
-      Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
-      FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
-      pushToDecodeBuffer(fetchedInstruction);
-      int nextLine = getBranchPredictor().predict(fetchedInstruction);
-      getProgramCounter().setValue(nextLine);
-      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
-    }
-  }
-
   private void dispatchReservationStations() {
     arithmeticLogicUnits.forEach(u -> u.getReservationStation().dispatch());
     loadStoreUnits.forEach(u -> u.getReservationStation().dispatch());
@@ -182,43 +187,6 @@ public class Processor {
     arithmeticLogicUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     loadStoreUnits.forEach(u -> u.getReservationStation().receive(tag, result));
     branchUnits.forEach(u -> u.getReservationStation().receive(tag, result));
-  }
-
-  private void decode() {
-    dispatchReservationStations();
-    if (!decodeBuffer.isEmpty()) {
-      FetchedInstruction toIssue = decodeBuffer.peek();
-      ReservationStation toIssueTo = null;
-
-      switch(toIssue.getInstruction().getOpcode().getCategory()) {
-        case ARITHMETIC:
-          toIssueTo = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-        case MEMORY:
-          toIssueTo = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-        case CONTROL:
-          toIssueTo = branchUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-      }
-
-      if (toIssueTo != null) {
-        if (!toIssueTo.isFull() && !reorderBuffer.isFull()) {
-          decodeBuffer.poll();
-
-          Tag tag = tagGenerator.generateTag();
-          int lineNumber = toIssue.getLineNumber();
-          DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(o -> o.decode()).toArray(DecodedOperand[]::new);
-          DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
-
-          reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
-          toIssueTo.issue(decodedInstruction);
-          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
-        } else {
-          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
-        }
-      }
-    }
   }
 
   public void printStatus() {
@@ -270,6 +238,54 @@ public class Processor {
 
   public void incrementIncorrectBranchPredictions() {
     incorrectBranchPredictions++;
+  }
+
+  private void fetch() {
+    if (!hasReachedProgramEnd()) {
+      Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
+      FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
+      pushToDecodeBuffer(fetchedInstruction);
+      int nextLine = getBranchPredictor().predict(fetchedInstruction);
+      getProgramCounter().setValue(nextLine);
+      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
+    }
+  }
+
+  private void decode() {
+    dispatchReservationStations();
+    if (!decodeBuffer.isEmpty()) {
+      FetchedInstruction toIssue = decodeBuffer.peek();
+      ReservationStation toIssueTo = null;
+
+      switch(toIssue.getInstruction().getOpcode().getCategory()) {
+        case ARITHMETIC:
+          toIssueTo = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation();
+          break;
+        case MEMORY:
+          toIssueTo = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation();
+          break;
+        case CONTROL:
+          toIssueTo = branchUnits.stream().min(unitLoadComparator).get().getReservationStation();
+          break;
+      }
+
+      if (toIssueTo != null) {
+        if (!toIssueTo.isFull() && !reorderBuffer.isFull()) {
+          decodeBuffer.poll();
+
+          Tag tag = tagGenerator.generateTag();
+          int lineNumber = toIssue.getLineNumber();
+          DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(o -> o.decode()).toArray(DecodedOperand[]::new);
+          DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
+
+          reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
+          toIssueTo.issue(decodedInstruction);
+          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
+        } else {
+          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
+        }
+      }
+    }
   }
 
   private void execute() {

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import control.RuntimeError;
+
 /* A stateful wrapper around instructions */
 public class DecodedInstruction {
 
@@ -15,6 +17,7 @@ public class DecodedInstruction {
   protected Optional<Integer> executionResult = Optional.empty();
   protected Optional<Integer> branchTarget = Optional.empty();
   protected Optional<Boolean> branchTaken = Optional.empty();
+  protected Optional<RuntimeError> error = Optional.empty();
   protected InstructionStatus instructionStatus = InstructionStatus.PENDING;
 
   public DecodedInstruction(Instruction instruction, Tag tag, int lineNumber, DecodedOperand... decodedOperands) {
@@ -55,6 +58,14 @@ public class DecodedInstruction {
 
   public Optional<Integer> getBranchTarget() {
     return branchTarget;
+  }
+
+  public Optional<RuntimeError> getRuntimeError() {
+    return error;
+  }
+
+  public void raiseRuntimeError(RuntimeError error) {
+    this.error = Optional.of(error);
   }
 
   public InstructionStatus getInstructionStatus() {
@@ -99,7 +110,7 @@ public class DecodedInstruction {
     return sourceRegisters;
   }
 
-  public int evaluate() {
+  public Optional<Integer> evaluate() {
     if (isReady()) {
       return instruction.evaluate(operands);
     } else {

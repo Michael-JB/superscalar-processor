@@ -75,8 +75,8 @@ public class ReorderBuffer {
         if (retiringOpcode.getCategory().equals(OpcodeCategory.CONTROL)
           && toRetire.getDecodedInstruction().getBranchTarget().isPresent()) {
           toRetire.getDecodedInstruction().getBranchTaken().ifPresent(taken -> {
-            processor.getBranchPredictor().getBranchTargetAddressCache().getEntryForLine(toRetire.getDecodedInstruction().getLineNumber()).ifPresent(e -> {
-              if (e.getPredictedTaken() == taken) {
+            processor.getBranchPredictor().getBranchTargetAddressCache().getEntryForLine(toRetire.getDecodedInstruction().getLineNumber()).ifPresent(entry -> {
+              if (entry.getPredictedTaken() == taken) {
                 processor.incrementCorrectBranchPredictions();
               } else {
                 processor.incrementIncorrectBranchPredictions();
@@ -87,7 +87,7 @@ public class ReorderBuffer {
                   programCounterRegister.setValue(toRetire.getDecodedInstruction().getLineNumber() + 1);
                 }
               }
-              e.alertBranchRetired(taken);
+              entry.alertBranchRetired(taken);
             });
           });
         }
@@ -99,6 +99,7 @@ public class ReorderBuffer {
         }
       });
 
+      toRetire.getDecodedInstruction().getRuntimeError().ifPresent(error -> processor.raiseRuntimeError(error));
       loadStoreBuffer.retireInstruction(toRetire.getDecodedInstruction());
       processor.getTagGenerator().retireTag(toRetire.getDecodedInstruction().getTag());
       System.out.println("RETIRE INSTRUCTION: " + toRetire.getDecodedInstruction().toString());

@@ -60,9 +60,13 @@ public class Main {
         log("PROGRAM RUN END");
       }
 
-      log("PROCESSOR FINAL STATUS START");
-      processor.printStatus();
-      log("PROCESSOR FINAL STATUS END");
+      if (processor.hasRuntimeError()) {
+        System.out.println(processor.getRuntimeError().get().toString());
+      } else {
+        log("PROCESSOR FINAL STATUS START");
+        processor.printStatus();
+        log("PROCESSOR FINAL STATUS END");
+      }
 
       int instructionCount = parsedProgram.getInstructionCount();
       int executedInstructionCount = processor.getExecutedInstructionCount();

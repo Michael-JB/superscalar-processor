@@ -7,6 +7,7 @@ import java.util.Optional;
 import core.Processor;
 import instruction.DecodedInstruction;
 import instruction.DecodedRegisterOperand;
+import instruction.Opcode;
 import instruction.OpcodeCategory;
 import instruction.Tag;
 import unit.Unit;
@@ -44,7 +45,9 @@ public class ReservationStation {
   public boolean isMemoryReady(DecodedInstruction instruction) {
     if (instruction.getInstruction().getOpcode().getCategory().equals(OpcodeCategory.MEMORY)) {
       if (instruction.isReady()) {
-        return !processor.getReorderBuffer().getLoadStoreBuffer().previousStoreExistsForInstruction(instruction);
+        Opcode opcode = instruction.getInstruction().getOpcode();
+        return !processor.getReorderBuffer().getLoadStoreBuffer().previousMemoryAccessExistsForInstruction(instruction,
+          (opcode.equals(Opcode.LA) || opcode.equals(Opcode.LAI)));
       }
       return false;
     }

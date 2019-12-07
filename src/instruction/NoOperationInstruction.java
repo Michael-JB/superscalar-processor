@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class NoOperationInstruction extends Instruction {
 
   public NoOperationInstruction() {
@@ -7,8 +9,8 @@ public class NoOperationInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return 0;
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    return Optional.of(0);
   }
 
 }

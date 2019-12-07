@@ -1,5 +1,7 @@
 package instruction;
 
+import java.util.Optional;
+
 public class JumpInstruction extends Instruction {
 
   public JumpInstruction(ValueOperand dest) {
@@ -7,8 +9,8 @@ public class JumpInstruction extends Instruction {
   }
 
   @Override
-  public int evaluate(DecodedOperand... operands) {
-    return operands[0].getExecutionValue().get();
+  public Optional<Integer> evaluate(DecodedOperand... operands) {
+    return Optional.of(operands[0].getExecutionValue().get());
   }
 
 }
