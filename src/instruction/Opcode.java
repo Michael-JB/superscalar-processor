@@ -26,8 +26,7 @@ public enum Opcode {
   BLT (OpcodeCategory.CONTROL, 3, 1),    /* blt  r1 r2 v1 = PC += {v1 if r1 <  r2, 1 otherwise} */
   BLE (OpcodeCategory.CONTROL, 3, 1),    /* ble  r1 r2 v1 = PC += {v1 if r1 <= r2, 1 otherwise} */
   JMP (OpcodeCategory.CONTROL, 1, 1),    /* jmp v1        = PC <- v1 */
-  NOP (OpcodeCategory.CONTROL, 0, 1),    /* nop           = Do nothing */
-  ;
+  NOP (OpcodeCategory.CONTROL, 0, 1);    /* nop           = Do nothing */
 
   private final String instructionPrefix;
   private final OpcodeCategory category;
