@@ -40,9 +40,4 @@ public class DecodedRegisterOperand extends DecodedOperand {
     return blockingTag;
   }
 
-  // @Override
-  // public String toString() {
-  //   return "r" + value;
-  // }
-
 }
