@@ -54,7 +54,6 @@ public class Assembler {
 
     List<Optional<Instruction>> instructions = sanitisedLines.stream()
       .map(this::removeLabel)
-      .filter(s -> !s.isEmpty())
       .map(l -> parseLine(sanitisedLines.indexOf(l), l, labels))
       .collect(Collectors.toList());
 
@@ -96,13 +95,8 @@ public class Assembler {
     HashMap<String, Integer> labels = new HashMap<String, Integer>();
     for (String line : lines) {
       if (line.contains(":")) {
-        String[] split = line.split(":", 2);
-        String label = split[0];
-        if (split[1].isEmpty()) {
-          labels.put(label, lines.indexOf(line) + 1);
-        } else {
-          labels.put(label, lines.indexOf(line));
-        }
+        String label = line.split(":", 2)[0];
+        labels.put(label, lines.indexOf(line));
       }
     }
     return labels;
@@ -311,7 +305,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchGreaterThanInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
