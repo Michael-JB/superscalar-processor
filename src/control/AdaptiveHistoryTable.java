@@ -1,6 +1,7 @@
 package control;
 
 import java.util.HashMap;
+import java.util.StringJoiner;
 
 public class AdaptiveHistoryTable extends DynamicBranchMetric {
 
@@ -42,18 +43,17 @@ public class AdaptiveHistoryTable extends DynamicBranchMetric {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
+    StringJoiner sj = new StringJoiner(System.lineSeparator(), System.lineSeparator(), "");
     if (table.isEmpty()) {
-      sb.append("Empty" + System.lineSeparator());
+      sj.add("Empty");
     } else {
-      sb.append(System.lineSeparator());
       table.keySet().stream().forEach(history -> {
         SaturatingCounter counter = table.get(history);
-        sb.append("> " + String.format("%" + width + "s", Integer.toBinaryString(history)).replace(' ', '0')
-          + " | " + counter.toString() + System.lineSeparator());
+        sj.add("> " + String.format("%" + width + "s",
+          Integer.toBinaryString(history)).replace(' ', '0') + " | " + counter.toString());
       });
     }
-    return sb.toString();
+    return sj.toString();
   }
 
 }

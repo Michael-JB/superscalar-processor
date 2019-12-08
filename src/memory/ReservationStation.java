@@ -7,7 +7,6 @@ import java.util.Optional;
 import core.Processor;
 import instruction.DecodedInstruction;
 import instruction.DecodedRegisterOperand;
-import instruction.Opcode;
 import instruction.OpcodeCategory;
 import instruction.Tag;
 import unit.Unit;

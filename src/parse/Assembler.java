@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,14 +40,22 @@ import instruction.ValueOperand;
 
 public class Assembler {
 
-  private final String charRegexWhitelist = "[^A-Za-z0-9# -]";
+  private final String charRegexWhitelist = "[^A-Za-z0-9# -:]";
   private final String commentPrefix = "#";
 
   public ParsedProgram parseProgramFile(String programFile) {
-    List<Optional<Instruction>> instructions = getLinesFromFile(programFile).stream()
+
+    List<String> sanitisedLines = getLinesFromFile(programFile).stream()
       .map(this::sanitiseLine)
       .filter(s -> !s.isEmpty())
-      .map(this::parseLine)
+      .collect(Collectors.toList());
+
+    HashMap<String, Integer> labels = getLabels(sanitisedLines);
+
+    List<Optional<Instruction>> instructions = sanitisedLines.stream()
+      .map(this::removeLabel)
+      .filter(s -> !s.isEmpty())
+      .map(l -> parseLine(sanitisedLines.indexOf(l), l, labels))
       .collect(Collectors.toList());
 
     if (instructions.stream().allMatch(Optional::isPresent)) {
@@ -58,6 +67,45 @@ public class Assembler {
         .filter(i -> !i.isPresent())
         .findFirst().get()));
     }
+  }
+
+  public String removeLabel(String line) {
+    if (line.contains(":")) {
+      return sanitiseLine(line.split(":", 2)[1]);
+    }
+    return line;
+  }
+
+  public String replaceLabelForRelativeNumber(int lineNumber, String line, HashMap<String, Integer> labels) {
+    String newLine = line;
+    for (String label : labels.keySet()) {
+      newLine = newLine.replace(label, "" + (labels.get(label) - lineNumber));
+    }
+    return newLine;
+  }
+
+  public String replaceLabelForAbsoluteNumber(String line, HashMap<String, Integer> labels) {
+    String newLine = line;
+    for (String label : labels.keySet()) {
+      newLine = newLine.replace(label, "" + labels.get(label));
+    }
+    return newLine;
+  }
+
+  public HashMap<String, Integer> getLabels(List<String> lines) {
+    HashMap<String, Integer> labels = new HashMap<String, Integer>();
+    for (String line : lines) {
+      if (line.contains(":")) {
+        String[] split = line.split(":", 2);
+        String label = split[0];
+        if (split[1].isEmpty()) {
+          labels.put(label, lines.indexOf(line) + 1);
+        } else {
+          labels.put(label, lines.indexOf(line));
+        }
+      }
+    }
+    return labels;
   }
 
   public List<String> getLinesFromFile(String fileName) {
@@ -98,7 +146,7 @@ public class Assembler {
     return Optional.empty();
   }
 
-  public Optional<Instruction> parseLine(String line) {
+  public Optional<Instruction> parseLine(int lineNumber, String line, HashMap<String, Integer> labels) {
     String[] tokens = line.split(" ");
 
     if (tokens.length > 0) {
@@ -239,7 +287,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
@@ -250,7 +299,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchNotEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
@@ -272,7 +322,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchGreaterThanOrEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
@@ -283,7 +334,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchLessThanInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
@@ -294,7 +346,8 @@ public class Assembler {
           if (tokens.length > opcode.getOperandCount()) {
             Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.SOURCE);
             Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
-            Optional<ValueOperand> operand3 = parseValueOperand(tokens[3]);
+            String potentialLabel = replaceLabelForRelativeNumber(lineNumber, tokens[3], labels);
+            Optional<ValueOperand> operand3 = parseValueOperand(potentialLabel);
             if (operand1.isPresent() && operand2.isPresent() && operand3.isPresent()) {
               return Optional.of(new BranchLessThanOrEqualInstruction(operand1.get(), operand2.get(), operand3.get()));
             }
@@ -303,7 +356,8 @@ public class Assembler {
         case "jmp":
           opcode = Opcode.JMP;
           if (tokens.length > opcode.getOperandCount()) {
-            Optional<ValueOperand> operand1 = parseValueOperand(tokens[1]);
+            String potentialLabel = replaceLabelForAbsoluteNumber(tokens[1], labels);
+            Optional<ValueOperand> operand1 = parseValueOperand(potentialLabel);
             if (operand1.isPresent()) {
               return Optional.of(new JumpInstruction(operand1.get()));
             }

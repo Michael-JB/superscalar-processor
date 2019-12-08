@@ -59,7 +59,7 @@ public class LoadStoreBuffer {
         }
       }
     } else {
-      throw new IllegalArgumentException("Cannot check previous stores for unready/unscheduled instruction");
+      throw new IllegalArgumentException("Cannot forward previous stores for unready/unscheduled instruction");
     }
     return Optional.empty();
   }
