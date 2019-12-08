@@ -13,6 +13,7 @@ import instruction.DecodedInstruction;
 import instruction.DecodedOperand;
 import instruction.FetchedInstruction;
 import instruction.Instruction;
+import instruction.Operand;
 import instruction.Tag;
 import instruction.TagGenerator;
 import memory.Memory;
@@ -142,6 +143,22 @@ public class Processor {
     return programCounterRegister.getValue() >= parsedProgram.getInstructionCount();
   }
 
+  public void incrementExecutedInstructionCount() {
+    executedInstructionCount++;
+  }
+
+  public void incrementCorrectBranchPredictions() {
+    correctBranchPredictions++;
+  }
+
+  public void incrementIncorrectBranchPredictions() {
+    incorrectBranchPredictions++;
+  }
+
+  private void incrementCycleCount() {
+    cycleCount++;
+  }
+
   public Optional<RuntimeError> getRuntimeError() {
     return runtimeError;
   }
@@ -183,6 +200,73 @@ public class Processor {
     branchUnits.forEach(u -> u.getReservationStation().receive(tag, result));
   }
 
+  private void fetch() {
+    if (!hasReachedProgramEnd()) {
+      Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
+      FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
+      pushToDecodeBuffer(fetchedInstruction);
+      int nextLine = getBranchPredictor().predict(fetchedInstruction);
+      getProgramCounter().setValue(nextLine);
+      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
+    }
+  }
+
+  private void decode() {
+    dispatchReservationStations();
+    if (!decodeBuffer.isEmpty()) {
+      FetchedInstruction toIssue = decodeBuffer.peek();
+      Optional<ReservationStation> toIssueTo = Optional.empty();
+
+      switch(toIssue.getInstruction().getOpcode().getCategory()) {
+        case ARITHMETIC:
+          toIssueTo = Optional.of(arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation());
+          break;
+        case MEMORY:
+          toIssueTo = Optional.of(loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation());
+          break;
+        case CONTROL:
+          toIssueTo = Optional.of(branchUnits.stream().min(unitLoadComparator).get().getReservationStation());
+          break;
+      }
+
+      toIssueTo.ifPresent(rs -> {
+        if (!rs.isFull() && !reorderBuffer.isFull()) {
+          decodeBuffer.poll();
+
+          Tag tag = tagGenerator.generateTag();
+          int lineNumber = toIssue.getLineNumber();
+          DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(Operand::decode).toArray(DecodedOperand[]::new);
+          DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
+
+          reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
+          rs.issue(decodedInstruction);
+          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
+        } else {
+          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
+        }
+      });
+    }
+  }
+
+  private void execute() {
+    tickUnits();
+  }
+
+  private void writeback() {
+    reorderBuffer.retire();
+  }
+
+  public void tick() {
+    writeback();
+    execute();
+    for (int i = 0; i < processorConfiguration.getWidth(); i++)
+      decode();
+    for (int i = 0; i < processorConfiguration.getWidth(); i++)
+      fetch();
+
+    incrementCycleCount();
+  }
+
   public void printStatus() {
     System.out.println("Re-order Buffer:");
     System.out.print(reorderBuffer.toString());
@@ -220,84 +304,5 @@ public class Processor {
 
     System.out.println("Memory:");
     System.out.println(memory.toString(8));
-  }
-
-  public void incrementExecutedInstructionCount() {
-    executedInstructionCount++;
-  }
-
-  public void incrementCorrectBranchPredictions() {
-    correctBranchPredictions++;
-  }
-
-  public void incrementIncorrectBranchPredictions() {
-    incorrectBranchPredictions++;
-  }
-
-  private void fetch() {
-    if (!hasReachedProgramEnd()) {
-      Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
-      FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
-      pushToDecodeBuffer(fetchedInstruction);
-      int nextLine = getBranchPredictor().predict(fetchedInstruction);
-      getProgramCounter().setValue(nextLine);
-      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
-    }
-  }
-
-  private void decode() {
-    dispatchReservationStations();
-    if (!decodeBuffer.isEmpty()) {
-      FetchedInstruction toIssue = decodeBuffer.peek();
-      ReservationStation toIssueTo = null;
-
-      switch(toIssue.getInstruction().getOpcode().getCategory()) {
-        case ARITHMETIC:
-          toIssueTo = arithmeticLogicUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-        case MEMORY:
-          toIssueTo = loadStoreUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-        case CONTROL:
-          toIssueTo = branchUnits.stream().min(unitLoadComparator).get().getReservationStation();
-          break;
-      }
-
-      if (toIssueTo != null) {
-        if (!toIssueTo.isFull() && !reorderBuffer.isFull()) {
-          decodeBuffer.poll();
-
-          Tag tag = tagGenerator.generateTag();
-          int lineNumber = toIssue.getLineNumber();
-          DecodedOperand[] decodedOperands = Arrays.stream(toIssue.getInstruction().getOperands()).map(o -> o.decode()).toArray(DecodedOperand[]::new);
-          DecodedInstruction decodedInstruction = new DecodedInstruction(toIssue.getInstruction(), tag, lineNumber, decodedOperands);
-
-          reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
-          toIssueTo.issue(decodedInstruction);
-          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
-        } else {
-          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
-        }
-      }
-    }
-  }
-
-  private void execute() {
-    tickUnits();
-  }
-
-  private void writeback() {
-    reorderBuffer.retire();
-  }
-
-  public void tick() {
-    writeback();
-    execute();
-    for (int i = 0; i < processorConfiguration.getWidth(); i++)
-      decode();
-    for (int i = 0; i < processorConfiguration.getWidth(); i++)
-      fetch();
-
-    cycleCount++;
   }
 }
