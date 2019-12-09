@@ -11,6 +11,7 @@ public enum Opcode {
   DIV (OpcodeCategory.ARITHMETIC, 3, 8), /* div  r1 r2 r3 = r1 <- r2 / r3 */
   CMP (OpcodeCategory.ARITHMETIC, 3, 1), /* cmp  r1 r2 r3 = r1 <- {-1 if r2 < r3, 0 if r2 = r3, 1 if r2 > r3} */
   MOVE(OpcodeCategory.ARITHMETIC, 2, 1), /* move r1 v1    = r1 <- v1 */
+  COPY(OpcodeCategory.ARITHMETIC, 2, 1), /* copy r1 r2    = r1 <- r2 */
 
   /* Memory */
   LA  (OpcodeCategory.MEMORY, 3, 2),     /* la   r1 r2 v1 = r1 <- [r2 + v1] */

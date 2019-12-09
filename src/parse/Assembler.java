@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import instruction.BranchLessThanInstruction;
 import instruction.BranchLessThanOrEqualInstruction;
 import instruction.BranchNotEqualInstruction;
 import instruction.CompareInstruction;
+import instruction.CopyInstruction;
 import instruction.DivideInstruction;
 import instruction.Instruction;
 import instruction.JumpInstruction;
@@ -52,9 +54,12 @@ public class Assembler {
 
     HashMap<String, Integer> labels = getLabels(sanitisedLines);
 
-    List<Optional<Instruction>> instructions = sanitisedLines.stream()
+    List<String> labelsRemoved = sanitisedLines.stream()
       .map(this::removeLabel)
-      .map(l -> parseLine(sanitisedLines.indexOf(l), l, labels))
+      .collect(Collectors.toList());
+
+    List<Optional<Instruction>> instructions = labelsRemoved.stream()
+      .map(l -> parseLine(labelsRemoved.indexOf(l), l, labels))
       .collect(Collectors.toList());
 
     if (instructions.stream().allMatch(Optional::isPresent)) {
@@ -75,20 +80,26 @@ public class Assembler {
     return line;
   }
 
-  public String replaceLabelForRelativeNumber(int lineNumber, String line, HashMap<String, Integer> labels) {
-    String newLine = line;
-    for (String label : labels.keySet()) {
-      newLine = newLine.replace(label, "" + (labels.get(label) - lineNumber));
-    }
-    return newLine;
+  public Optional<String> longestMatchingLabel(String token, HashMap<String, Integer> labels) {
+    return labels.keySet().stream()
+      .filter(label -> token.equals(label))
+      .max(Comparator.comparing(String::length));
   }
 
-  public String replaceLabelForAbsoluteNumber(String line, HashMap<String, Integer> labels) {
-    String newLine = line;
-    for (String label : labels.keySet()) {
-      newLine = newLine.replace(label, "" + labels.get(label));
+  public String replaceLabelForRelativeNumber(int lineNumber, String token, HashMap<String, Integer> labels) {
+    Optional<String> longestMatchingLabel = longestMatchingLabel(token, labels);
+    if (longestMatchingLabel.isPresent()) {
+      return "" + (labels.get(longestMatchingLabel.get()) - lineNumber);
     }
-    return newLine;
+    return token;
+  }
+
+  public String replaceLabelForAbsoluteNumber(String token, HashMap<String, Integer> labels) {
+    Optional<String> longestMatchingLabel = longestMatchingLabel(token, labels);
+    if (longestMatchingLabel.isPresent()) {
+      return "" + labels.get(longestMatchingLabel.get());
+    }
+    return token;
   }
 
   public HashMap<String, Integer> getLabels(List<String> lines) {
@@ -231,6 +242,16 @@ public class Assembler {
             Optional<ValueOperand> operand2 = parseValueOperand(tokens[2]);
             if (operand1.isPresent() && operand2.isPresent()) {
               return Optional.of(new MoveInstruction(operand1.get(), operand2.get()));
+            }
+          }
+          break;
+        case "copy":
+          opcode = Opcode.COPY;
+          if (tokens.length > opcode.getOperandCount()) {
+            Optional<RegisterOperand> operand1 = parseRegisterOperand(tokens[1], RegisterOperandCategory.DESTINATION);
+            Optional<RegisterOperand> operand2 = parseRegisterOperand(tokens[2], RegisterOperandCategory.SOURCE);
+            if (operand1.isPresent() && operand2.isPresent()) {
+              return Optional.of(new CopyInstruction(operand1.get(), operand2.get()));
             }
           }
           break;
