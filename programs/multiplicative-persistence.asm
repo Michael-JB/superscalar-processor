@@ -9,17 +9,16 @@
          mul r7 r7 r0         # Otherwise, multiply final digit
          jmp next             # Proceed to next iteration
 
- splitc: mul r7 r7 r3         # Divide by base (effectively shift right by digit)
-         div r0 r0 r1         # Update running total with modulo
+ reduce: mul r7 r7 r3         # Update running total with modulo
+         div r0 r0 r1         # Divide by base (effectively shift right by digit)
          jmp split            # Process next digit
-
 
     mod: copy r2 r0           # mod: r3 = r0 % r1
 
   modin: sub r2 r2 r1         # Subtract base
-         bge r2 r1 modin     # Loop if value >= base
+         bge r2 r1 modin      # Loop if value >= base
          copy r3 r2           # Set result to remainder
-         jmp splitc           # Return
+         jmp reduce           # Return
 
    next: copy r0 r7           # Update working value with result of prev iteration
          addi r8 r8 1         # Increment iteration counter
