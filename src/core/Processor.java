@@ -180,6 +180,7 @@ public class Processor {
     reorderBuffer.flush();
     decodeBuffer.clear();
     tagGenerator.flush();
+    branchPredictor.getBranchTargetAddressCache().flush();
   }
 
   private void tickUnits() {
@@ -204,10 +205,14 @@ public class Processor {
     if (!hasReachedProgramEnd()) {
       Instruction next = parsedProgram.getInstructionForLine(getProgramCounter().getValue());
       FetchedInstruction fetchedInstruction = new FetchedInstruction(next, getProgramCounter().getValue());
-      pushToDecodeBuffer(fetchedInstruction);
-      int nextLine = getBranchPredictor().predict(fetchedInstruction);
-      getProgramCounter().setValue(nextLine);
-      System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
+      Optional<Integer> nextLine = getBranchPredictor().predict(fetchedInstruction);
+      if (nextLine.isPresent()) {
+        pushToDecodeBuffer(fetchedInstruction);
+        getProgramCounter().setValue(nextLine.get());
+        System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
+      } else {
+        System.out.println("FETCH BLOCKED: " + fetchedInstruction.toString());
+      }
     }
   }
 
