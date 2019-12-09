@@ -5,6 +5,7 @@ import java.util.Optional;
 public class BranchTargetAddressCacheEntry {
 
   private final int targetLine;
+  private boolean predictionMade = false;
   private boolean predictedTaken = false;
   private Optional<DynamicBranchMetric> dynamicBranchMetric = Optional.empty();
 
@@ -19,6 +20,7 @@ public class BranchTargetAddressCacheEntry {
 
   public void alertBranchRetired(boolean branchTaken) {
     dynamicBranchMetric.ifPresent(metric -> metric.update(branchTaken));
+    predictionMade = false;
   }
 
   public Optional<DynamicBranchMetric> getDynamicBranchMetric() {
@@ -29,12 +31,21 @@ public class BranchTargetAddressCacheEntry {
     return targetLine;
   }
 
-  public void setPredictedTaken(boolean predictedTaken) {
+  public void setPrediction(boolean predictedTaken) {
     this.predictedTaken = predictedTaken;
+    predictionMade = true;
+  }
+
+  public boolean getPredictionMade() {
+    return predictionMade;
   }
 
   public boolean getPredictedTaken() {
     return predictedTaken;
+  }
+
+  public void resetPredictionMade() {
+    this.predictionMade = false;
   }
 
   @Override

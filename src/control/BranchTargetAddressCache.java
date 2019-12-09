@@ -20,6 +20,10 @@ public class BranchTargetAddressCache {
     return Optional.empty();
   }
 
+  public void flush() {
+    branchTargetAddressCache.values().forEach(BranchTargetAddressCacheEntry::resetPredictionMade);
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();

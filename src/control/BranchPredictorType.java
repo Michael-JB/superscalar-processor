@@ -9,8 +9,10 @@ public enum BranchPredictorType {
   ONE_BIT_SATURATED(new SaturatedBranchPredictor(1)),
   TWO_BIT_SATURATED(new SaturatedBranchPredictor(2)),
   THREE_BIT_SATURATED(new SaturatedBranchPredictor(3)),
-  TWO_BIT_TWO_LEVEL_ADAPTIVE(new CorrelationBranchPredictor(2, 2)),
-  THREE_BIT_TWO_LEVEL_ADAPTIVE(new CorrelationBranchPredictor(3, 3));
+  TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE(new CorrelationBranchPredictor(2, 2)),
+  THREE_BIT_LOCAL_TWO_LEVEL_ADAPTIVE(new CorrelationBranchPredictor(3, 3)),
+  TWO_BIT_GLOBAL_TWO_LEVEL_ADAPTIVE(new GlobalCorrelationBranchPredictor(2, 2)),
+  THREE_BIT_GLOBAL_TWO_LEVEL_ADAPTIVE(new GlobalCorrelationBranchPredictor(3, 3));
 
   private final BranchPredictor branchPredictor;
 

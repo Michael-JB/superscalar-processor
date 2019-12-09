@@ -9,15 +9,19 @@ public class AdaptiveHistoryTable extends DynamicBranchMetric {
   private final BranchHistoryShifter historyShifter;
   private final HashMap<Integer, SaturatingCounter> table = new HashMap<Integer, SaturatingCounter>();
 
-  public AdaptiveHistoryTable(int width, int saturationBitCount) {
+  public AdaptiveHistoryTable(int width, int saturationBitCount, BranchHistoryShifter branchHistoryShifter) {
 
     if (width <= 0 || width > 3) {
       throw new IllegalArgumentException("Table width out of range");
     }
 
-    this.historyShifter = new BranchHistoryShifter(width);
+    this.historyShifter = branchHistoryShifter;
     this.width = width;
     this.saturationBitCount = saturationBitCount;
+  }
+
+  public AdaptiveHistoryTable(int width, int saturationBitCount) {
+    this(width, saturationBitCount, new BranchHistoryShifter(width));
   }
 
   public int getWidth() {
@@ -44,7 +48,7 @@ public class AdaptiveHistoryTable extends DynamicBranchMetric {
   @Override
   public String toString() {
     StringJoiner sj = new StringJoiner(System.lineSeparator(), System.lineSeparator(), "");
-    sj.add("Local history: " + historyShifter.toString());
+    sj.add("History: " + historyShifter.toString());
     if (!table.isEmpty()) {
       table.keySet().stream().forEach(history -> {
         SaturatingCounter counter = table.get(history);

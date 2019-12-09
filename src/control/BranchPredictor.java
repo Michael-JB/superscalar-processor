@@ -20,9 +20,9 @@ public abstract class BranchPredictor {
     return branchTargetAddressCache;
   }
 
-  protected abstract int predictBranchInstruction(FetchedInstruction fetchedBranchInstruction, ValueOperand deltaOperand);
+  protected abstract Optional<Integer> predictBranchInstruction(FetchedInstruction fetchedBranchInstruction, ValueOperand deltaOperand);
 
-  public int predict(FetchedInstruction fetchedInstruction) {
+  public Optional<Integer> predict(FetchedInstruction fetchedInstruction) {
     Opcode opcode = fetchedInstruction.getInstruction().getOpcode();
     int nextLine = fetchedInstruction.getLineNumber() + 1;
     if (opcode.getCategory().equals(OpcodeCategory.CONTROL)) {
@@ -33,13 +33,13 @@ public abstract class BranchPredictor {
 
       if (valueOperand.isPresent()) {
         if (opcode == Opcode.JMP) {
-          return valueOperand.get().getValue();
+          return Optional.of(valueOperand.get().getValue());
         } else {
           return predictBranchInstruction(fetchedInstruction, valueOperand.get());
         }
       }
     }
-    return nextLine;
+    return Optional.of(nextLine);
   }
 
 }
