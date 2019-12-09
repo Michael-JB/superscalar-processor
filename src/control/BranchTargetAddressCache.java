@@ -28,7 +28,7 @@ public class BranchTargetAddressCache {
     } else {
       branchTargetAddressCache.keySet().stream().forEach(line -> {
         BranchTargetAddressCacheEntry entry = branchTargetAddressCache.get(line);
-        sb.append(String.format("%-2d", line) + " | " + entry.toString() + System.lineSeparator());
+        sb.append(String.format("%-2d", line) + " -> " + entry.toString() + System.lineSeparator());
       });
     }
     return sb.toString();

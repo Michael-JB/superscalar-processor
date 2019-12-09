@@ -44,13 +44,12 @@ public class AdaptiveHistoryTable extends DynamicBranchMetric {
   @Override
   public String toString() {
     StringJoiner sj = new StringJoiner(System.lineSeparator(), System.lineSeparator(), "");
-    if (table.isEmpty()) {
-      sj.add("Empty");
-    } else {
+    sj.add("Local history: " + historyShifter.toString());
+    if (!table.isEmpty()) {
       table.keySet().stream().forEach(history -> {
         SaturatingCounter counter = table.get(history);
         sj.add("> " + String.format("%" + width + "s",
-          Integer.toBinaryString(history)).replace(' ', '0') + " | " + counter.toString());
+          Integer.toBinaryString(history)).replace(' ', '0') + ": " + counter.toString());
       });
     }
     return sj.toString();

@@ -39,8 +39,8 @@ public class BranchTargetAddressCacheEntry {
 
   @Override
   public String toString() {
-    return "Target: " + targetLine
-      + " | Prediction: " + (predictedTaken ? "Taken" : "Not taken")
+    return targetLine
+      + " (Predicted " + (predictedTaken ? "taken" : "not taken") + ")"
       + (dynamicBranchMetric.isPresent() ? " " + dynamicBranchMetric.get().toString() : "");
   }
 
