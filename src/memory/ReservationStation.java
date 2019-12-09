@@ -59,7 +59,7 @@ public class ReservationStation {
       if (!instruction.isReady()) {
         List<DecodedRegisterOperand> sourceRegisters = instruction.getSourceRegisters();
         sourceRegisters.forEach(o -> {
-          if (o.getBlockingTag().isPresent() && o.getBlockingTag().get().matches(tag)) {
+          if (!o.getExecutionValue().isPresent() && o.getBlockingTag().isPresent() && o.getBlockingTag().get().matches(tag)) {
             o.setExecutionValue(result);
           }
         });
