@@ -1,6 +1,7 @@
 package core;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -14,6 +15,78 @@ public class Main {
 
   private static void log(String message) {
     System.out.println("------------------------------ " + message);
+  }
+
+  private static void test(ParsedProgram program) {
+    ArrayList<Float> ipcs = new ArrayList<Float>();
+    for (BranchPredictorType bp : BranchPredictorType.values()) {
+      ProcessorConfiguration config = new ProcessorConfiguration(6, 3, 1, 2, 32, 32, 8, 16, 128, bp);
+
+      Processor processor = new Processor(program, config);
+      processor.run();
+
+      int executedInstructionCount = processor.getExecutedInstructionCount();
+      int cycles = processor.getCycleCount();
+
+      float instructionsPerCycle = (float) executedInstructionCount / (float) cycles;
+      ipcs.add(instructionsPerCycle);
+      System.out.println(bp.toString() + ": " + String.format("%.2f", instructionsPerCycle));
+
+      int correctBranchPredictions = processor.getCorrectBranchPredictionCount();
+      int incorrectBranchPredictions = processor.getIncorrectBranchPredictionCount();
+
+      float correctBranchPredictionRate = (float) (100 * correctBranchPredictions) / (incorrectBranchPredictions + correctBranchPredictions);
+      System.out.println(bp.toString() + ": " + String.format("%.1f", correctBranchPredictionRate));
+    }
+    System.out.println(ipcs);
+  }
+
+  private static void runProgram(Processor processor, boolean interactiveMode) {
+    if (interactiveMode) {
+      Scanner scanner = new Scanner(System.in);
+      log("PROGRAM STEP START");
+      while (processor.step()) {
+        System.out.println();
+        processor.printStatus();
+        scanner.nextLine();
+        log("PROGRAM STEP");
+      }
+      scanner.close();
+    } else {
+      log("PROGRAM RUN START");
+      processor.run();
+      log("PROGRAM RUN END");
+    }
+
+    if (processor.hasRuntimeError()) {
+      System.out.println(processor.getRuntimeError().get().toString());
+    } else {
+      log("PROCESSOR FINAL STATUS START");
+      processor.printStatus();
+      log("PROCESSOR FINAL STATUS END");
+    }
+
+    int instructionCount = processor.getParsedProgram().getInstructionCount();
+    int executedInstructionCount = processor.getExecutedInstructionCount();
+    int cycles = processor.getCycleCount();
+    int correctBranchPredictions = processor.getCorrectBranchPredictionCount();
+    int incorrectBranchPredictions = processor.getIncorrectBranchPredictionCount();
+
+    Optional<Float> cyclesPerInstruction = executedInstructionCount != 0 ? Optional.of((float) cycles / (float) executedInstructionCount) : Optional.empty();
+    Optional<Float> instructionsPerCycle = cycles != 0 ? Optional.of((float) executedInstructionCount / (float) cycles) : Optional.empty();
+    Optional<Float> correctBranchPredictionRate = (incorrectBranchPredictions + correctBranchPredictions) != 0 ?
+      Optional.of((float) (100 * correctBranchPredictions) / (incorrectBranchPredictions + correctBranchPredictions)) : Optional.empty();
+
+    log("ANALYTICS START");
+    System.out.println("Program instructions: " + instructionCount);
+    System.out.println("Executed instructions: " + executedInstructionCount);
+    System.out.println("Cycles taken: " + cycles);
+    System.out.println("Branches correctly predicted: " + correctBranchPredictions);
+    System.out.println("Branches incorrectly predicted: " + incorrectBranchPredictions);
+    correctBranchPredictionRate.ifPresent(i -> System.out.println("Correct branch prediction rate: " +  String.format("%.1f", i) + "%"));
+    cyclesPerInstruction.ifPresent(i -> System.out.println("Cycles per instruction: " + String.format("%.2f", i)));
+    instructionsPerCycle.ifPresent(i -> System.out.println("Instructions per cycle: " +  String.format("%.2f", i)));
+    log("ANALYTICS END");
   }
 
   public static void main(String[] args) {
@@ -46,52 +119,8 @@ public class Main {
 
     if (!parsedProgram.hasError()) {
       Processor processor = new Processor(parsedProgram, processorConfiguration);
-
-      if (interactiveMode) {
-        Scanner scanner = new Scanner(System.in);
-        log("PROGRAM STEP START");
-        while (processor.step()) {
-          System.out.println();
-          processor.printStatus();
-          scanner.nextLine();
-          log("PROGRAM STEP");
-        }
-        scanner.close();
-      } else {
-        log("PROGRAM RUN START");
-        processor.run();
-        log("PROGRAM RUN END");
-      }
-
-      if (processor.hasRuntimeError()) {
-        System.out.println(processor.getRuntimeError().get().toString());
-      } else {
-        log("PROCESSOR FINAL STATUS START");
-        processor.printStatus();
-        log("PROCESSOR FINAL STATUS END");
-      }
-
-      int instructionCount = parsedProgram.getInstructionCount();
-      int executedInstructionCount = processor.getExecutedInstructionCount();
-      int cycles = processor.getCycleCount();
-      int correctBranchPredictions = processor.getCorrectBranchPredictionCount();
-      int incorrectBranchPredictions = processor.getIncorrectBranchPredictionCount();
-
-      Optional<Float> cyclesPerInstruction = executedInstructionCount != 0 ? Optional.of((float) cycles / (float) executedInstructionCount) : Optional.empty();
-      Optional<Float> instructionsPerCycle = cycles != 0 ? Optional.of((float) executedInstructionCount / (float) cycles) : Optional.empty();
-      Optional<Float> correctBranchPredictionRate = (incorrectBranchPredictions + correctBranchPredictions) != 0 ?
-        Optional.of((float) (100 * correctBranchPredictions) / (incorrectBranchPredictions + correctBranchPredictions)) : Optional.empty();
-
-      log("ANALYTICS START");
-      System.out.println("Program instructions: " + instructionCount);
-      System.out.println("Executed instructions: " + executedInstructionCount);
-      System.out.println("Cycles taken: " + cycles);
-      System.out.println("Branches correctly predicted: " + correctBranchPredictions);
-      System.out.println("Branches incorrectly predicted: " + incorrectBranchPredictions);
-      correctBranchPredictionRate.ifPresent(i -> System.out.println("Correct branch prediction rate: " +  String.format("%.1f", i) + "%"));
-      cyclesPerInstruction.ifPresent(i -> System.out.println("Cycles per instruction: " + String.format("%.2f", i)));
-      instructionsPerCycle.ifPresent(i -> System.out.println("Instructions per cycle: " +  String.format("%.2f", i)));
-      log("ANALYTICS END");
+      runProgram(processor, interactiveMode);
+      // test(parsedProgram);
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }

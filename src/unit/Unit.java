@@ -55,7 +55,7 @@ public abstract class Unit {
       DecodedInstruction completed = inputInstruction.get();
       completed.setInstructionStatus(InstructionStatus.EXECUTED);
       inputInstruction = Optional.empty();
-      System.out.println("EXECUTION COMPLETE: " + completed.toString());
+      processor.log("EXECUTION COMPLETE: " + completed.toString());
       resetDelayCounter();
       processor.incrementExecutedInstructionCount();
 
@@ -87,7 +87,7 @@ public abstract class Unit {
 
       /* Process instruction on first tick */
       if (getDelayCounter() == 0) {
-        System.out.println("EXECUTION START: " + toExecute.toString());
+        processor.log("EXECUTION START: " + toExecute.toString());
         toExecute.setInstructionStatus(InstructionStatus.EXECUTING);
       }
 

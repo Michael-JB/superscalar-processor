@@ -31,6 +31,8 @@ import unit.UnitLoadComparator;
 
 public class Processor {
 
+  private final boolean DEBUG = false;
+
   private final ParsedProgram parsedProgram;
   private final ProcessorConfiguration processorConfiguration;
   private final Memory memory;
@@ -127,6 +129,10 @@ public class Processor {
     return incorrectBranchPredictions;
   }
 
+  public ParsedProgram getParsedProgram() {
+    return parsedProgram;
+  }
+
   public RegisterFile getRegisterFile() {
     return registerFile;
   }
@@ -168,7 +174,7 @@ public class Processor {
   }
 
   public void raiseRuntimeError(RuntimeError runtimeError) {
-    System.out.println("RUNTIME ERROR: " + runtimeError.toString());
+    log("RUNTIME ERROR: " + runtimeError.toString());
     this.runtimeError = Optional.of(runtimeError);
   }
 
@@ -209,9 +215,9 @@ public class Processor {
       if (nextLine.isPresent()) {
         pushToDecodeBuffer(fetchedInstruction);
         getProgramCounter().setValue(nextLine.get());
-        System.out.println("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
+        log("FETCHED INSTRUCTION: " + fetchedInstruction.toString());
       } else {
-        System.out.println("FETCH BLOCKED: " + fetchedInstruction.toString());
+        log("FETCH BLOCKED: " + fetchedInstruction.toString());
       }
     }
   }
@@ -245,11 +251,17 @@ public class Processor {
 
           reorderBuffer.pushToTail(new ReorderBufferEntry(decodedInstruction));
           rs.issue(decodedInstruction);
-          System.out.println("ISSUED INSTRUCTION: " + decodedInstruction.toString());
+          log("ISSUED INSTRUCTION: " + decodedInstruction.toString());
         } else {
-          System.out.println("ISSUE BLOCKED: " + toIssue.toString());
+          log("ISSUE BLOCKED: " + toIssue.toString());
         }
       });
+    }
+  }
+
+  public void log(String message) {
+    if (DEBUG) {
+      System.out.println(message);
     }
   }
 

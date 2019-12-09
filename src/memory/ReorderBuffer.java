@@ -101,7 +101,7 @@ public class ReorderBuffer {
       toRetire.getDecodedInstruction().getRuntimeError().ifPresent(error -> processor.raiseRuntimeError(error));
       loadStoreBuffer.retireInstruction(toRetire.getDecodedInstruction());
       processor.getTagGenerator().retireTag(toRetire.getDecodedInstruction().getTag());
-      System.out.println("RETIRE INSTRUCTION: " + toRetire.getDecodedInstruction().toString());
+      processor.log("RETIRE INSTRUCTION: " + toRetire.getDecodedInstruction().toString());
       instructionsRetired++;
     }
   }
