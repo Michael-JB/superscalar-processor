@@ -24,4 +24,4 @@
          addi r8 r8 1         # Increment iteration counter
          bgt r0 r4 iter       # If multiple digits remain, begin next iteration
 
-    end: nop
+    end: sai r8 0             # Store result to memory
