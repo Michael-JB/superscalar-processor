@@ -19,7 +19,7 @@ public class StaticBranchPredictor extends BranchPredictor {
 
     if (getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).isPresent()) {
       BranchTargetAddressCacheEntry entry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).get();
-      if (entry.getPredictionMade()) {
+      if (entry.isAtMaxLevel()) {
         return Optional.empty();
       }
       predictTake = shouldTakeBranch(entry.getTargetLine(), fetchedBranchInstruction.getLineNumber());

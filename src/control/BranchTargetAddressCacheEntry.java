@@ -1,13 +1,16 @@
 package control;
 
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BranchTargetAddressCacheEntry {
 
+  private final int MAX_PREDICTION_LEVEL = 16;
+
   private final int targetLine;
-  private boolean predictionMade = false;
-  private boolean predictedTaken = false;
   private Optional<DynamicBranchMetric> dynamicBranchMetric = Optional.empty();
+  private LinkedList<Boolean> predictions = new LinkedList<Boolean>();
 
   public BranchTargetAddressCacheEntry(int targetLine) {
     this.targetLine = targetLine;
@@ -20,7 +23,9 @@ public class BranchTargetAddressCacheEntry {
 
   public void alertBranchRetired(boolean branchTaken) {
     dynamicBranchMetric.ifPresent(metric -> metric.update(branchTaken));
-    predictionMade = false;
+    if (!predictions.isEmpty()) {
+      predictions.removeFirst();
+    }
   }
 
   public Optional<DynamicBranchMetric> getDynamicBranchMetric() {
@@ -32,26 +37,30 @@ public class BranchTargetAddressCacheEntry {
   }
 
   public void setPrediction(boolean predictedTaken) {
-    this.predictedTaken = predictedTaken;
-    predictionMade = true;
+    predictions.addLast(predictedTaken);
   }
 
-  public boolean getPredictionMade() {
-    return predictionMade;
+  public boolean isAtMaxLevel() {
+    return predictions.size() >= MAX_PREDICTION_LEVEL;
   }
 
   public boolean getPredictedTaken() {
-    return predictedTaken;
+    return predictions.peek();
   }
 
   public void resetPredictionMade() {
-    this.predictionMade = false;
+    predictions.clear();
   }
 
   @Override
   public String toString() {
     return targetLine
-      + " (Predicted " + (predictedTaken ? "taken" : "not taken") + ")"
+      + " (Prediction queue: "
+      + (predictions.isEmpty() ? "-" :
+        predictions.stream()
+          .map(p -> p ? "1" : "0")
+          .collect(Collectors.joining("")))
+      + ")"
       + (dynamicBranchMetric.isPresent() ? " " + dynamicBranchMetric.get().toString() : "");
   }
 
