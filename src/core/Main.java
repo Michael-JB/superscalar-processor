@@ -20,7 +20,7 @@ public class Main {
   private static void test(ParsedProgram program) {
     ArrayList<Float> ipcs = new ArrayList<Float>();
     for (BranchPredictorType bp : BranchPredictorType.values()) {
-      ProcessorConfiguration config = new ProcessorConfiguration(6, 3, 1, 2, 32, 32, 8, 16, 128, bp);
+      ProcessorConfiguration config = new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 8, 16, 128, bp);
 
       Processor processor = new Processor(program, config);
       processor.run();
