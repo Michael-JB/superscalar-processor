@@ -2,7 +2,8 @@ package control;
 
 public enum BranchPredictorType {
 
-  STATIC(new StaticBranchPredictor()),
+  STATIC_FORWARDS_TAKEN(new StaticForwardsTaken()),
+  STATIC_BACKWARDS_TAKEN(new StaticBackwardsTaken()),
   ONE_BIT_HISTORY(new HistoryMajorityBranchPredictor(1)),
   THREE_BIT_HISTORY(new HistoryMajorityBranchPredictor(3)),
   FIVE_BIT_HISTORY(new HistoryMajorityBranchPredictor(5)),

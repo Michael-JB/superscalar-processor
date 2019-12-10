@@ -5,33 +5,29 @@ import java.util.Optional;
 import instruction.FetchedInstruction;
 import instruction.ValueOperand;
 
-public class StaticBranchPredictor extends BranchPredictor {
+public abstract class StaticBranchPredictor extends BranchPredictor {
 
-  private boolean shouldTakeBranch(int targetLine, int instructionLine) {
-    return targetLine < instructionLine;
-  }
+  protected abstract boolean shouldTakeBranch(int targetLine, int instructionLine);
 
   @Override
   protected Optional<Integer> predictBranchInstruction(FetchedInstruction fetchedBranchInstruction, ValueOperand deltaOperand) {
     int nextLine = fetchedBranchInstruction.getLineNumber() + 1;
     int predictedLine = nextLine;
     boolean predictTake = true;
+    Optional<BranchTargetAddressCacheEntry> existingEntry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber());
 
-    if (getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).isPresent()) {
-      BranchTargetAddressCacheEntry entry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).get();
-      if (entry.isAtMaxLevel()) {
-        return Optional.empty();
-      }
-      predictTake = shouldTakeBranch(entry.getTargetLine(), fetchedBranchInstruction.getLineNumber());
-      predictedLine = predictTake ? entry.getTargetLine() : nextLine;
-      entry.setPrediction(predictTake);
+    if (existingEntry.isPresent()) {
+      predictTake = shouldTakeBranch(existingEntry.get().getTargetLine(), fetchedBranchInstruction.getLineNumber());
+      predictedLine = predictTake ? existingEntry.get().getTargetLine() : nextLine;
     } else {
       int targetLine = fetchedBranchInstruction.getLineNumber() + deltaOperand.getValue();
       predictTake = shouldTakeBranch(targetLine, fetchedBranchInstruction.getLineNumber());
       predictedLine = predictTake ? targetLine : nextLine;
-      BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(targetLine);
-      entry.setPrediction(predictTake);
-      getBranchTargetAddressCache().addEntry(fetchedBranchInstruction.getLineNumber(), entry);
+      existingEntry = Optional.of(new BranchTargetAddressCacheEntry(targetLine));
+      getBranchTargetAddressCache().addEntry(fetchedBranchInstruction.getLineNumber(), existingEntry.get());
+    }
+    if (!existingEntry.get().setPrediction(predictTake)) {
+      return Optional.empty();
     }
     return Optional.of(predictedLine);
   }

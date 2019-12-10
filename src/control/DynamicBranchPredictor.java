@@ -14,23 +14,22 @@ public abstract class DynamicBranchPredictor extends BranchPredictor {
     int nextLine = fetchedBranchInstruction.getLineNumber() + 1;
     int predictedLine = nextLine;
     boolean predictTake = true;
+    Optional<BranchTargetAddressCacheEntry> existingEntry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber());
 
-    if (getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).isPresent()) {
-      BranchTargetAddressCacheEntry entry = getBranchTargetAddressCache().getEntryForLine(fetchedBranchInstruction.getLineNumber()).get();
-      if (entry.isAtMaxLevel()) {
-        return Optional.empty();
-      }
-      predictTake = entry.getDynamicBranchMetric().get().shouldTakeBranch();
-      predictedLine = predictTake ? entry.getTargetLine() : nextLine;
-      entry.setPrediction(predictTake);
+    if (existingEntry.isPresent()) {
+      predictTake = existingEntry.get().getDynamicBranchMetric().get().shouldTakeBranch();
+      predictedLine = predictTake ? existingEntry.get().getTargetLine() : nextLine;
     } else {
       DynamicBranchMetric branchMetric = createMetricForEntry();
       int targetLine = fetchedBranchInstruction.getLineNumber() + deltaOperand.getValue();
       predictTake = branchMetric.shouldTakeBranch();
       predictedLine = predictTake ? targetLine : nextLine;
-      BranchTargetAddressCacheEntry entry = new BranchTargetAddressCacheEntry(targetLine, branchMetric);
-      entry.setPrediction(predictTake);
-      getBranchTargetAddressCache().addEntry(fetchedBranchInstruction.getLineNumber(), entry);
+      existingEntry = Optional.of(new BranchTargetAddressCacheEntry(targetLine, branchMetric));
+      getBranchTargetAddressCache().addEntry(fetchedBranchInstruction.getLineNumber(), existingEntry.get());
+    }
+
+    if (!existingEntry.get().setPrediction(predictTake)) {
+      return Optional.empty();
     }
     return Optional.of(predictedLine);
   }

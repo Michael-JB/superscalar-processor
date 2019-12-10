@@ -21,7 +21,7 @@ public class BranchTargetAddressCache {
   }
 
   public void flush() {
-    branchTargetAddressCache.values().forEach(BranchTargetAddressCacheEntry::resetPredictionMade);
+    branchTargetAddressCache.values().forEach(BranchTargetAddressCacheEntry::resetPredictionsMade);
   }
 
   @Override

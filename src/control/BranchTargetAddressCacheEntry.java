@@ -36,11 +36,15 @@ public class BranchTargetAddressCacheEntry {
     return targetLine;
   }
 
-  public void setPrediction(boolean predictedTaken) {
-    predictions.addLast(predictedTaken);
+  public boolean setPrediction(boolean predictedTaken) {
+    if (!isAtMaxLevel()) {
+      predictions.addLast(predictedTaken);
+      return true;
+    }
+    return false;
   }
 
-  public boolean isAtMaxLevel() {
+  private boolean isAtMaxLevel() {
     return predictions.size() >= MAX_PREDICTION_LEVEL;
   }
 
@@ -48,7 +52,7 @@ public class BranchTargetAddressCacheEntry {
     return predictions.peek();
   }
 
-  public void resetPredictionMade() {
+  public void resetPredictionsMade() {
     predictions.clear();
   }
 
