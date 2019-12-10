@@ -2,6 +2,8 @@
 
 A simulation of a Superscalar Processor
 
+![Schematic](schematic.png)
+
 ## Usage
 
 This project is written in Java and built using Apache Ant.
