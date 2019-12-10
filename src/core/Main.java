@@ -111,7 +111,7 @@ public class Main {
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
     ProcessorConfiguration processorConfiguration =
-      new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 4, 16, 128, BranchPredictorType.TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE);
+      new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 4, 16, 128, BranchPredictorType.STATIC_CONDITIONAL_NOT_TAKEN);
 
     log("PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
