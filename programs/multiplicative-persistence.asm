@@ -1,4 +1,4 @@
-  init: move r0 68889        # (const) Number to calculate multiplicative persistence of
+  init: move r0 679        # (const) Number to calculate multiplicative persistence of
         move r1 10           # (const) Base of calculation
         move r4 9            # (const) Maximum value of digit
         move r8 0            # Iteration counter
