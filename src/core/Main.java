@@ -11,6 +11,8 @@ import parse.ParsedProgram;
 public class Main {
 
   private final static String defaultProgramFileName = "./programs/add.asm";
+  private final static ProcessorConfiguration defaultProcessorConfiguration =
+    new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 8, 16, 128, BranchPredictorType.TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE);
 
   private static void log(String message) {
     System.out.println("------------------------------ " + message);
@@ -85,8 +87,7 @@ public class Main {
 
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
-    ProcessorConfiguration processorConfiguration =
-      new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 8, 16, 128, BranchPredictorType.TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE);
+    ProcessorConfiguration processorConfiguration = defaultProcessorConfiguration;
 
     log("PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
