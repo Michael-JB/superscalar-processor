@@ -75,12 +75,6 @@ public class ReservationStation {
     if (!isFull()) {
       instruction.getSourceRegisters().forEach(o -> o.tryRetrieveValue(processor));
 
-      // if (instruction.getInstruction().getOpcode().equals(Opcode.LA) || instruction.getInstruction().getOpcode().equals(Opcode.LAI)) {
-      //   if (processor.getReorderBuffer().getLoadStoreBuffer().loadStoreForward(instruction).isPresent()) {
-      //    // TODO: Load-Store forwarding. Here?
-      //   }
-      // }
-
       /* Bypass if instruction is already ready */
       if (canDispatch(instruction) && instructionBuffer.isEmpty()) {
         unit.inputInstruction(instruction);
