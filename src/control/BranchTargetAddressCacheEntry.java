@@ -9,8 +9,8 @@ public class BranchTargetAddressCacheEntry {
   private final int MAX_PREDICTION_LEVEL = 16;
 
   private final int targetLine;
+  private final LinkedList<Boolean> predictions = new LinkedList<Boolean>();
   private Optional<DynamicBranchMetric> dynamicBranchMetric = Optional.empty();
-  private LinkedList<Boolean> predictions = new LinkedList<Boolean>();
 
   public BranchTargetAddressCacheEntry(int targetLine) {
     this.targetLine = targetLine;

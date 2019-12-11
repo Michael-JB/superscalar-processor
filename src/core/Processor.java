@@ -320,6 +320,6 @@ public class Processor {
     System.out.println();
 
     System.out.println("Memory:");
-    System.out.println(memory.toString(8));
+    System.out.println(memory.toString(12));
   }
 }

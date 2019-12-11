@@ -1,7 +1,6 @@
 package core;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -15,30 +14,6 @@ public class Main {
 
   private static void log(String message) {
     System.out.println("------------------------------ " + message);
-  }
-
-  private static void test(ParsedProgram program) {
-    ArrayList<Float> ipcs = new ArrayList<Float>();
-    for (BranchPredictorType bp : BranchPredictorType.values()) {
-      ProcessorConfiguration config = new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 8, 16, 128, bp);
-
-      Processor processor = new Processor(program, config);
-      processor.run();
-
-      int executedInstructionCount = processor.getExecutedInstructionCount();
-      int cycles = processor.getCycleCount();
-
-      float instructionsPerCycle = (float) executedInstructionCount / (float) cycles;
-      ipcs.add(instructionsPerCycle);
-      System.out.println(bp.toString() + ": " + String.format("%.2f", instructionsPerCycle));
-
-      int correctBranchPredictions = processor.getCorrectBranchPredictionCount();
-      int incorrectBranchPredictions = processor.getIncorrectBranchPredictionCount();
-
-      float correctBranchPredictionRate = (float) (100 * correctBranchPredictions) / (incorrectBranchPredictions + correctBranchPredictions);
-      System.out.println(bp.toString() + ": " + String.format("%.1f", correctBranchPredictionRate));
-    }
-    System.out.println(ipcs);
   }
 
   private static void runProgram(Processor processor, boolean interactiveMode) {
@@ -111,16 +86,14 @@ public class Main {
     Assembler assembler = new Assembler();
     ParsedProgram parsedProgram = assembler.parseProgramFile(programFileName);
     ProcessorConfiguration processorConfiguration =
-      new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 4, 16, 128, BranchPredictorType.TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE);
+      new ProcessorConfiguration(4, 2, 1, 1, 32, 32, 8, 16, 128, BranchPredictorType.TWO_BIT_LOCAL_TWO_LEVEL_ADAPTIVE);
 
     log("PROGRAM INSTRUCTIONS START");
     System.out.print(parsedProgram.toString());
     log("PROGRAM INSTRUCTIONS END");
 
     if (!parsedProgram.hasError()) {
-      Processor processor = new Processor(parsedProgram, processorConfiguration);
-      runProgram(processor, interactiveMode);
-      // test(parsedProgram);
+      runProgram(new Processor(parsedProgram, processorConfiguration), interactiveMode);
     } else {
       System.out.println("Could not parse line " + parsedProgram.getErrorLine().get() + " of program file.");
     }
