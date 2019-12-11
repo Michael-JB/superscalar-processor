@@ -1,6 +1,4 @@
-# Requires 12+ registers
-
-# Load unsorted arr into registers
+        # Load unsorted arr into registers
   init: move r0 10
         move r1 12
         move r2 5
@@ -49,7 +47,7 @@
         bne r2 r0 step      # Branch if not at end of arr
         bgt r1 r6 start     # Branch if values were swapped in pass
 
-# Load arr back into the registers
+        # Load arr back into the registers
    out: lai r0 0
         lai r1 1
         lai r2 2
