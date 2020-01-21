@@ -19,12 +19,13 @@ This project is written in Java and built using Apache Ant.
   - `$ ant build` compiles the source tree files,
   - `$ ant build-jar` compiles a JAR from built class files,
   - `$ ant run` runs the project JAR:
-    - Specify a custom program file: `$ ant run -Dpf=./programs/some_program.asm`.
-    - Run in interactive mode: `$ ant run -Dpf=./programs/some_program.asm -Di=true`.
+    - Specify a custom program file: `$ ant run -Dpf=programs/some-program.asm`.
+    - Run in interactive mode: `$ ant run -Dpf=programs/some-program.asm -Di=true`.
+    - Omission of the `run` parameter will trigger a build before execution.
 - Alternatively, once built, you can interact with the JAR directly:
   - `$ java -jar superscalar-processor.jar` to run the default program, or
-  - `$ java -jar superscalar-processor.jar ./programs/some_program.asm false` to specify a custom program file, or
-  - `$ java -jar superscalar-processor.jar ./programs/some_program.asm true` run in interactive mode.
+  - `$ java -jar superscalar-processor.jar programs/some-program.asm` to specify a custom program file, or
+  - `$ java -jar superscalar-processor.jar programs/some-program.asm true` run in interactive mode.
 
 
 ## Built with
